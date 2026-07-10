@@ -13,10 +13,10 @@ export async function onRequestPost({ request, env, params }) {
   }));
 
   const ghToken = env.GH_PAT;
-  const ghOwner = env.GH_OWNER || "islammuradov1";
-  const ghRepo = env.GH_REPO || "azvscars";
-  const ghWorkflow = env.GH_WORKFLOW || "worker.yml";
-  const ghRef = env.GH_REF || "main";
+  const ghOwner = env.GH_TARGET_OWNER || env.GH_OWNER || "islammuradov1";
+  const ghRepo = env.GH_TARGET_REPO || env.GH_REPO || "azvscars";
+  const ghWorkflow = env.GH_TARGET_WORKFLOW || env.GH_WORKFLOW || "worker.yml";
+  const ghRef = env.GH_TARGET_REF || env.GH_REF || "main";
 
   if (!ghToken) {
     await env.AZVSCARS_KV.put(`status_${sid}`, JSON.stringify({

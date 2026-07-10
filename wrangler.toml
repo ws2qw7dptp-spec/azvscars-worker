@@ -2,6 +2,12 @@ name = "azvscars"
 pages_build_output_dir = "frontend"
 compatibility_date = "2026-07-10"
 
+[vars]
+GH_TARGET_OWNER = "ws2qw7dptp-spec"
+GH_TARGET_REPO = "azvscars-worker"
+GH_TARGET_WORKFLOW = "worker.yml"
+GH_TARGET_REF = "main"
+
 # Cloudflare KV binding for Pages Functions
 [[kv_namespaces]]
 binding = "AZVSCARS_KV"

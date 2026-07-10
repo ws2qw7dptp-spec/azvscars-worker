@@ -94,6 +94,11 @@ export async function onRequestPost({ request, env, params }) {
       published: meta.published || {},
     });
     await kv.put("sessions:index", JSON.stringify(index.slice(0, 500)));
+    await kv.put(`status_${sid}`, JSON.stringify({
+      status: "done",
+      message: "✅ Hazırdır!",
+      sid,
+    }));
 
     return new Response(JSON.stringify({ ok: true, sid, uploaded: Object.keys(uploaded) }), {
       headers: { "Content-Type": "application/json" },
