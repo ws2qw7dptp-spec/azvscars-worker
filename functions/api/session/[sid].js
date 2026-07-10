@@ -30,7 +30,8 @@ export async function onRequestGet({ request, env, params }) {
   }
 
   const published = meta.published || {};
-  const carousel_published = Boolean(published.carousel || meta.is_published);
+  const hasTypedPublishState = Object.keys(published).length > 0;
+  const carousel_published = hasTypedPublishState ? Boolean(published.carousel) : Boolean(meta.is_published);
   const reel_published = Boolean(published.reel);
 
   return new Response(JSON.stringify({
