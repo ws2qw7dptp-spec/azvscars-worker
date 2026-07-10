@@ -1,0 +1,12 @@
+flask>=3.0.0
+gunicorn>=21.2.0
+Pillow>=10.0.0
+requests>=2.31.0
+boto3>=1.34.0
+botocore>=1.34.0
+python-dotenv
+opencv-python-headless
+yt-dlp
+imageio-ffmpeg
+ffmpeg-python
+Flask-Cors

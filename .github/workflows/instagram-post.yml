@@ -1,0 +1,82 @@
+name: Instagram Automated Poster
+
+on:
+  schedule:
+    # 09:00 AZT -> 08:50 AZT -> 04:50 UTC (Quick Choice)
+    - cron: "50 4 * * *"
+    # 13:00 AZT -> 12:50 AZT -> 08:50 UTC (Main VS Battle)
+    - cron: "50 8 * * *"
+    # 19:30 AZT -> 19:20 AZT -> 15:20 UTC (Comment War)
+    - cron: "20 15 * * *"
+    # 22:45 AZT -> 22:35 AZT -> 18:35 UTC (Dark Night)
+    - cron: "35 18 * * *"
+
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Post Type to generate'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - quick
+          - main
+          - war
+          - night
+
+jobs:
+  post-to-instagram:
+    runs-on: ubuntu-latest
+    
+    env:
+      ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
+      PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
+      INGEST_VIA_PAGES: "true"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Determine Post Type
+        id: set-type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "POST_TYPE=${{ github.event.inputs.type }}" >> "$GITHUB_ENV"
+          else
+            if [[ "${{ github.event.schedule }}" == "50 4 * * *" ]]; then
+              echo "POST_TYPE=quick" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "50 8 * * *" ]]; then
+              echo "POST_TYPE=main" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "20 15 * * *" ]]; then
+              echo "POST_TYPE=war" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "35 18 * * *" ]]; then
+              echo "POST_TYPE=night" >> "$GITHUB_ENV"
+            else
+              echo "POST_TYPE=main" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Automated Post
+        run: |
+          SID="auto$(date +%Y%m%d%H%M%S)"
+          MAKE_REEL="false"
+          if [[ "$POST_TYPE" == "quick" || "$POST_TYPE" == "war" || "$POST_TYPE" == "night" ]]; then
+            MAKE_REEL="true"
+          fi
+          python worker.py \
+            --action generate \
+            --sid "$SID" \
+            --post_type "$POST_TYPE" \
+            --make_reel "$MAKE_REEL" \
+            --auto_publish true

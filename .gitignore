@@ -1,0 +1,24 @@
+# Environment variables
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+
+# Project specific
+output/
+.wrangler/
+.actions-runner/
+assets/
+sessions.json
+*.jpg
+*.png
+
+# OS specific
+.DS_Store

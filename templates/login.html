@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZvsCars — Giriş</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:   #E5091F;
+    --dark:  #0a0a0a;
+    --card:  #141414;
+    --border:#242424;
+    --text:  #f0f0f0;
+    --muted: #666;
+  }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  /* Background diagonal lines */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      -55deg,
+      transparent,
+      transparent 80px,
+      rgba(229,9,31,.03) 80px,
+      rgba(229,9,31,.03) 81px
+    );
+    pointer-events: none;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 420px;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0,0,0,.8);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .logo-vs {
+    background: var(--red);
+    color: #fff;
+    font-weight: 800;
+    font-size: 18px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+  }
+  .logo-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.5px;
+  }
+  .logo-name span { color: var(--red); }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 8px;
+  }
+  input {
+    width: 100%;
+    background: #1e1e1e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    outline: none;
+    margin-bottom: 20px;
+    transition: border-color .2s;
+  }
+  input:focus { border-color: var(--red); }
+  .btn {
+    width: 100%;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    margin-top: 6px;
+    letter-spacing: .5px;
+  }
+  .btn:hover  { opacity: .88; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .error-msg {
+    color: #ff4d4d;
+    font-size: 13px;
+    margin-top: 12px;
+    text-align: center;
+    display: none;
+  }
+  .red-line {
+    position: absolute;
+    top: 0; left: 50%;
+    width: 3px; height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--red) 40%, transparent);
+    transform: translateX(-50%);
+    opacity: .35;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="red-line"></div>
+  <div class="logo">
+    <div class="logo-vs">VS</div>
+    <div class="logo-name">AZ<span>vs</span>Cars</div>
+  </div>
+  <h1>Xoş gəldiniz</h1>
+  <p class="subtitle">Davam etmək üçün hesabınıza daxil olun.</p>
+  <label for="email">E-poçt</label>
+  <input type="email" id="email" placeholder="email@example.com" autocomplete="off">
+  <label for="password">Şifrə</label>
+  <input type="password" id="password" placeholder="••••••••">
+  <button class="btn" onclick="doLogin()">Daxil ol →</button>
+  <div class="error-msg" id="err"></div>
+</div>
+
+<script>
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  async function doLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const err = document.getElementById('err');
+    err.style.display = 'none';
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      const d = await res.json();
+      err.textContent = d.error || 'Giriş uğursuz oldu.';
+      err.style.display = 'block';
+    }
+  }
+</script>
+</body>
+</html>

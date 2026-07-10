@@ -1,0 +1,13 @@
+name = "azvscars"
+pages_build_output_dir = "frontend"
+compatibility_date = "2026-07-10"
+
+# Cloudflare KV binding for Pages Functions
+[[kv_namespaces]]
+binding = "AZVSCARS_KV"
+id = "c3304e2a4cad4c51b9661a7c4dbf1f7f"
+
+# Cloudflare R2 binding for Pages Functions
+[[r2_buckets]]
+binding = "AZVSCARS_R2"
+bucket_name = "azvscars-slides"

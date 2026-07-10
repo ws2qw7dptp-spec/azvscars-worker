@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZvsCars — İdarə Paneli</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red:    #E5091F;
+  --dark:   #080808;
+  --card:   #111;
+  --card2:  #181818;
+  --border: #242424;
+  --text:   #f0f0f0;
+  --muted:  #555;
+  --green:  #22c55e;
+}
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+/* ── Layout ── */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,8,8,.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 60px;
+}
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.logo-vs {
+  background: var(--red); color: #fff;
+  font-weight: 800; font-size: 14px;
+  padding: 5px 10px; border-radius: 6px; letter-spacing: 1px;
+}
+.logo-name { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+.logo-name span { color: var(--red); }
+.topbar-right { display: flex; align-items: center; gap: 20px; }
+.logout-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-family: 'Inter', sans-serif;
+  font-size: 13px; padding: 7px 14px; border-radius: 8px;
+  cursor: pointer; transition: all .2s;
+}
+.logout-btn:hover { border-color: var(--red); color: var(--text); }
+
+.main { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+
+/* ── Generate Button ── */
+.gen-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; margin-bottom: 32px;
+}
+.gen-info h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.gen-info p  { color: var(--muted); font-size: 14px; }
+.gen-btn {
+  background: var(--red); color: #fff; border: none;
+  font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
+  padding: 15px 36px; border-radius: 14px; cursor: pointer;
+  transition: opacity .2s, transform .15s; white-space: nowrap;
+  letter-spacing: .3px;
+}
+.gen-btn:hover  { opacity: .85; transform: translateY(-2px); }
+.gen-btn:active { transform: translateY(0); }
+.gen-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ── Status Bar ── */
+.status-bar {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 20px;
+  font-size: 14px; margin-bottom: 32px;
+  display: none; align-items: center; gap: 12px;
+}
+.status-bar.show { display: flex; }
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Preview Section ── */
+.preview-section { margin-bottom: 48px; }
+.section-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.section-title { font-size: 16px; font-weight: 700; }
+.section-badge {
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: .5px;
+}
+.car-tags {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.car-tag {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+
+/* Slides grid */
+.slides-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.slide-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+.slide-card img {
+  width: 100%; aspect-ratio: 4/5;
+  object-fit: cover; display: block;
+  transition: transform .3s;
+}
+.slide-card:hover img { transform: scale(1.03); }
+.slide-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,.85));
+  padding: 20px 10px 10px;
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-align: center; letter-spacing: .5px; text-transform: uppercase;
+}
+
+/* ── Flip Controls ── */
+.flip-controls {
+  display: flex; gap: 12px; margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.flip-btn {
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; padding: 10px 20px;
+  border-radius: 10px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.flip-btn:hover { border-color: var(--red); }
+.flip-btn .icon { font-size: 16px; }
+.flip-btn.active { border-color: var(--red); color: var(--red); }
+
+/* ── Caption Box ── */
+.caption-box {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;
+}
+.caption-label {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
+}
+.caption-text {
+  font-size: 14px; line-height: 1.65; color: var(--text);
+  white-space: pre-wrap;
+  border: none; background: none; width: 100%; resize: vertical;
+  font-family: 'Inter', sans-serif; color: var(--text); outline: none;
+  min-height: 90px;
+}
+
+/* ── Publish Button ── */
+.action-buttons {
+  display: flex; gap: 16px; margin-top: 20px;
+}
+.publish-btn {
+  background: var(--green); color: #fff; border: none;
+  font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+  padding: 14px 32px; border-radius: 12px; cursor: pointer;
+  transition: opacity .2s, transform .15s; display: inline-flex;
+  align-items: center; gap: 10px; flex: 1; justify-content: center;
+}
+.publish-btn:hover  { opacity: .85; transform: translateY(-1px); }
+.publish-btn:active { transform: translateY(0); }
+.publish-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; background: #555; }
+
+.delete-btn {
+  background: transparent; color: var(--red); border: 1px solid var(--red);
+  font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+  padding: 14px 24px; border-radius: 12px; cursor: pointer;
+  transition: opacity .2s, transform .15s; display: inline-flex;
+  align-items: center; gap: 10px;
+}
+.delete-btn:hover { background: rgba(229, 9, 20, 0.1); }
+
+/* ── History ── */
+.history-section { margin-top: 48px; }
+.history-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.history-card {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+  cursor: pointer; transition: all .2s;
+}
+.history-card:hover { border-color: var(--red); transform: translateY(-2px); }
+.history-vs {
+  font-size: 10px; color: var(--red); font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;
+}
+.history-names { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.history-date  { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.history-status {
+  font-size: 11px; font-weight: 600; margin-top: 8px;
+  display: inline-block; padding: 3px 8px; border-radius: 6px;
+}
+.status-pub { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.status-pend { background: rgba(255, 255, 255, 0.1); color: #aaa; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 32px; right: 32px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 22px;
+  font-size: 14px; font-weight: 500; z-index: 9999;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  transform: translateY(100px); opacity: 0;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+  max-width: 360px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); }
+.toast.error   { border-color: var(--red); }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted); font-size: 15px;
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+
+@media (max-width: 900px) {
+  .slides-grid { grid-template-columns: repeat(3, 1fr); }
+  .gen-section { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 600px) {
+  .slides-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar { padding: 0 16px; }
+  .main { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<nav class="topbar">
+  <a class="logo" href="/">
+    <div class="logo-vs">VS</div>
+    <div class="logo-name">AZ<span>vs</span>Cars</div>
+  </a>
+  <div class="topbar-right">
+    <button class="logout-btn" onclick="location.href='/api/logout'">Çıxış</button>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- Generate Section -->
+  <div class="gen-section">
+    <div class="gen-info">
+      <h2>Yeni Müqayisə Postu</h2>
+      <p>Cloudflare AI ilə yeni avtomobil müqayisəsi yarat və Instagram-a paylaş.</p>
+    </div>
+    
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <select id="postTypeSelect" style="padding: 12px 16px; border-radius: 10px; background: var(--card2); color: var(--text); border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; cursor: pointer;">
+        <option value="main">13:00 - Real VS Battle (Carousel)</option>
+        <option value="quick">09:00 - Quick Choice (Sadə)</option>
+        <option value="war">19:30 - Comment War (Sürətli Loop)</option>
+        <option value="night">22:45 - Dark Night (Gecə sürmə)</option>
+      </select>
+      
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 500;">
+        <input type="checkbox" id="makeReelToggle" style="width: 18px; height: 18px; accent-color: var(--red); cursor: pointer;">
+        🎬 Reel Video Yarat
+      </label>
+
+      <button class="gen-btn" id="genBtn" onclick="startGenerate()">
+        ⚡ Yeni Post Yarat
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar" id="statusBar">
+    <div class="spinner" id="statusSpinner"></div>
+    <span id="statusMsg">İşlənir…</span>
+  </div>
+
+  <!-- Preview Section -->
+  <div class="preview-section" id="previewSection" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Post Önizləməsi</div>
+      <div class="section-badge" id="sessionBadge">—</div>
+    </div>
+
+    <div class="car-tags" id="carTags"></div>
+
+    <!-- Slides -->
+    <div class="slides-grid" id="slidesGrid"></div>
+
+    <!-- Video Preview (Hidden by default) -->
+    <div id="videoPreviewContainer" style="display:none; margin-top: 20px; text-align: center;">
+      <h3 style="font-size: 14px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">🎬 Reel Preview</h3>
+      <video id="reelVideoPlayer" controls loop style="max-width: 100%; height: 500px; border-radius: 12px; border: 1px solid var(--border);"></video>
+    </div>
+
+    <!-- Flip Controls -->
+    <div class="flip-controls">
+      <button class="flip-btn" id="flip1Btn" onclick="flipCar(1)">
+        <span class="icon">↔️</span> Sol Maşını Çevir
+      </button>
+      <button class="flip-btn" id="flip2Btn" onclick="flipCar(2)">
+        <span class="icon">↔️</span> Sağ Maşını Çevir
+      </button>
+    </div>
+
+    <!-- Caption -->
+    <div class="caption-box">
+      <div class="caption-label">Instagram Mətni (düzəliş edə bilərsiniz)</div>
+      <textarea class="caption-text" id="captionText" rows="5"></textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-buttons">
+      <button class="publish-btn" id="publishBtn" onclick="publishPost('carousel')">
+        📸 Karusel Paylaş
+      </button>
+      <button class="publish-btn" id="publishReelBtn" onclick="publishPost('reel')" style="background: #e1306c; display: none;">
+        🎬 Reel Paylaş
+      </button>
+      <button class="delete-btn" id="deleteBtn" onclick="deletePost()">
+        🗑️ Postu Sil
+      </button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-section">
+    <div class="section-header">
+      <div class="section-title">Son Postlar</div>
+    </div>
+    <div class="history-grid" id="historyGrid">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        Hələ heç bir post yaradılmayıb.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let currentSid = null;
+let pollInterval = null;
+
+const SLIDE_LABELS = ['Kapak', 'Mühərrik', 'Sürət', 'Qiymət', 'CTA'];
+
+// ── Generate ───────────────────────────────────────────────────────────────────
+async function startGenerate() {
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Gözləyin…';
+  showStatus('☁️ Cloudflare AI ilə müqayisə yaradılır…', true);
+
+  try {
+    const postType = document.getElementById('postTypeSelect').value;
+    const makeReel = document.getElementById('makeReelToggle').checked;
+    
+    const res = await fetch('/api/generate', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_type: postType, make_reel: makeReel })
+    });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Bilinməyən xəta');
+    currentSid = d.sid;
+    pollStatus(currentSid);
+  } catch (e) {
+    showStatus('❌ ' + e.message, false);
+    btn.disabled = false; btn.textContent = '⚡ Yeni Post Yarat';
+  }
+}
+
+function pollStatus(sid) {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(async () => {
+    try {
+      const res = await fetch('/api/status/' + sid);
+      const d   = await res.json();
+      showStatus(d.message, d.status === 'running');
+      if (d.status === 'done') {
+        clearInterval(pollInterval);
+        document.getElementById('genBtn').disabled = false;
+        document.getElementById('genBtn').textContent = '⚡ Yeni Post Yarat';
+        hideStatus();
+        await loadSession(sid);
+        await loadHistory();
+        toast('✅ Post hazırdır! Aşağıda baxın.', 'success');
+      } else if (d.status === 'error') {
+        clearInterval(pollInterval);
+        document.getElementById('genBtn').disabled = false;
+        document.getElementById('genBtn').textContent = '⚡ Yeni Post Yarat';
+        toast(d.message, 'error');
+        hideStatus();
+      }
+    } catch {}
+  }, 1500);
+}
+
+// ── Session ────────────────────────────────────────────────────────────────────
+async function loadSession(sid) {
+  const res = await fetch('/api/session/' + sid);
+  if (!res.ok) return;
+  const d = await res.json();
+  currentSid = sid;
+
+  // Car tags
+  document.getElementById('carTags').innerHTML =
+    `<div class="car-tag">🚗 ${d.car1_name}</div>
+     <div style="font-size:18px;font-weight:800;color:var(--red);align-self:center">VS</div>
+     <div class="car-tag">🚗 ${d.car2_name}</div>`;
+
+  document.getElementById('sessionBadge').textContent = sid;
+
+  // Slides — bust cache with timestamp
+  const ts = Date.now();
+  const grid = document.getElementById('slidesGrid');
+  grid.innerHTML = '';
+  d.slides.forEach((url, i) => {
+    grid.innerHTML += `
+      <div class="slide-card">
+        <img src="${url}?t=${ts}" alt="Slide ${i+1}" loading="lazy">
+        <div class="slide-label">${SLIDE_LABELS[i]}</div>
+      </div>`;
+  });
+
+  // Reel Preview
+  const vidContainer = document.getElementById('videoPreviewContainer');
+  const vidPlayer = document.getElementById('reelVideoPlayer');
+  if (d.reel_url) {
+    vidPlayer.src = d.reel_url + "?t=" + ts;
+    vidContainer.style.display = 'block';
+  } else {
+    vidPlayer.src = "";
+    vidContainer.style.display = 'none';
+  }
+
+  // Flip button states
+  updateFlipBtns(d.flip1, d.flip2, d.car1_name, d.car2_name);
+
+  // Caption
+  document.getElementById('captionText').value = d.caption;
+
+  // Publish State
+  const pubBtn = document.getElementById('publishBtn');
+  const pubReelBtn = document.getElementById('publishReelBtn');
+  
+  if (d.is_published) {
+    pubBtn.disabled = true;
+    pubBtn.textContent = '✅ Paylaşılıb';
+    pubReelBtn.style.display = 'none';
+  } else {
+    pubBtn.disabled = false;
+    pubBtn.textContent = '📸 Karusel Paylaş';
+    
+    if (d.reel_url) {
+        pubReelBtn.style.display = 'inline-flex';
+        pubReelBtn.disabled = false;
+        pubReelBtn.textContent = '🎬 Reel Paylaş';
+    } else {
+        pubReelBtn.style.display = 'none';
+    }
+  }
+
+  document.getElementById('previewSection').style.display = 'block';
+  document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateFlipBtns(flip1, flip2, n1, n2) {
+  const b1 = document.getElementById('flip1Btn');
+  const b2 = document.getElementById('flip2Btn');
+  b1.className = 'flip-btn' + (flip1 ? ' active' : '');
+  b2.className = 'flip-btn' + (flip2 ? ' active' : '');
+  b1.innerHTML = `<span class="icon">↔️</span> ${n1} — ${flip1 ? 'Çevrilib ✓' : 'Normal'}`;
+  b2.innerHTML = `<span class="icon">↔️</span> ${n2} — ${flip2 ? 'Çevrilib ✓' : 'Normal'}`;
+}
+
+// ── Flip ───────────────────────────────────────────────────────────────────────
+async function flipCar(car) {
+  if (!currentSid) return;
+  const btn = car === 1 ? document.getElementById('flip1Btn') : document.getElementById('flip2Btn');
+  btn.disabled = true; btn.textContent = '↻ Render edilir…';
+
+  try {
+    const res = await fetch(`/api/flip/${currentSid}/${car}`, { method: 'POST' });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    // Reload slides
+    await loadSession(currentSid);
+    toast('🔄 Maşın çevrildi!', 'success');
+  } catch(e) {
+    toast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Publish ────────────────────────────────────────────────────────────────────
+async function publishPost(media_type="carousel") {
+  const btn = (media_type === "reel") ? document.getElementById('publishReelBtn') : document.getElementById('publishBtn');
+  const txt = document.getElementById('captionText').value;
+
+  if (!confirm(`Bu post Instagram-da ${media_type} kimi paylaşılacaq. Davam edək?`)) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Paylaşılır...';
+
+  try {
+    const res = await fetch('/api/publish/' + currentSid, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caption: txt, media_type: media_type })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'API xətası');
+    toast(d.message || '✅ Paylaşıldı!', 'success');
+    await loadHistory();
+    await loadSession(currentSid); // refresh to disable publish btn
+  } catch(e) {
+    toast('❌ ' + e.message, 'error');
+  } finally {
+    if (!document.getElementById('publishBtn').disabled) {
+      btn.disabled = false; btn.textContent = '📸 Instagram-da Paylaş';
+    }
+  }
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────────
+async function deletePost() {
+  if (!currentSid) return;
+  if (!confirm("Bu postu silmək istədiyinizə əminsiniz?")) return;
+
+  const btn = document.getElementById('deleteBtn');
+  btn.disabled = true; btn.textContent = '🗑️ Silinir...';
+
+  try {
+    const res = await fetch(`/api/session/${currentSid}`, { method: 'DELETE' });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'API xətası');
+    
+    toast('✅ Post uğurla silindi!', 'success');
+    document.getElementById('previewSection').style.display = 'none';
+    currentSid = null;
+    await loadHistory();
+  } catch(e) {
+    toast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🗑️ Postu Sil';
+  }
+}
+
+// ── History ────────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const res = await fetch('/api/sessions');
+  if (!res.ok) return;
+  const items = await res.json();
+  const grid = document.getElementById('historyGrid');
+  if (!items.length) return;
+
+  grid.innerHTML = '';
+  items.forEach(s => {
+    const statusHtml = s.is_published 
+      ? `<div class="history-status status-pub">✅ Paylaşılıb</div>`
+      : `<div class="history-status status-pend">⏳ Gözləyir</div>`;
+      
+    grid.innerHTML += `
+      <div class="history-card" onclick="loadSession('${s.sid}')">
+        <div class="history-vs">VS MÜQAYİSƏ</div>
+        <div class="history-names">${s.car1}<br>${s.car2}</div>
+        <div class="history-date">${s.created_at}</div>
+        ${statusHtml}
+      </div>`;
+  });
+}
+
+// ── Status Bar ─────────────────────────────────────────────────────────────────
+function showStatus(msg, spinning = true) {
+  const bar = document.getElementById('statusBar');
+  document.getElementById('statusMsg').textContent = msg;
+  document.getElementById('statusSpinner').style.display = spinning ? 'block' : 'none';
+  bar.classList.add('show');
+}
+function hideStatus() {
+  document.getElementById('statusBar').classList.remove('show');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => { t.className = `toast ${type}`; }, 4000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+loadHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Hyundai Tucson 2022",
+    "price": "$24,500",
+    "specs": [
+      {"label": "Engine", "value": "2.0L, 156 hp"},
+      {"label": "Mileage", "value": "38,000 km"},
+      {"label": "Fuel type", "value": "Petrol"},
+      {"label": "Transmission", "value": "Automatic"}
+    ],
+    "note": "Source: public listing, priced Baku market, July 2026."
+  },
+  {
+    "name": "BYD Song Plus 2023",
+    "price": "$27,900",
+    "specs": [
+      {"label": "Engine", "value": "Hybrid, 218 hp"},
+      {"label": "Mileage", "value": "12,000 km"},
+      {"label": "Fuel type", "value": "Hybrid"},
+      {"label": "Transmission", "value": "Automatic"}
+    ],
+    "note": "Source: public listing, priced Baku market, July 2026."
+  }
+]
