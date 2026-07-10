@@ -4,6 +4,12 @@ export async function onRequestGet({ env, params }) {
   
   const statusRaw = await kv.get(`status_${sid}`, "json");
   if (statusRaw) {
+    if (statusRaw.status === "running") {
+      const meta = await kv.get(`session:${sid}`, "json");
+      if (meta) {
+        return new Response(JSON.stringify({ status: "done", message: "✅ Hazırdır!", sid: sid }), { headers: { "Content-Type": "application/json" } });
+      }
+    }
     return new Response(JSON.stringify(statusRaw), { headers: { "Content-Type": "application/json" } });
   }
 
