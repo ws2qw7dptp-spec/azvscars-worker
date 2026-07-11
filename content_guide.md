@@ -1,6 +1,6 @@
 # AZvsCars — Complete Content System
 
-A repeatable Instagram system for car-owner debates: four automated posts per day, controversial matchups, clean visuals, and captions that make people pick a side.
+Avtomobil sahiblərini tərəf seçməyə çağıran Azərbaycan dilli Instagram sistemi: gündə dörd avtomatik post, mübahisəli müqayisələr, təmiz vizual stil və şərh gətirən caption-lar.
 
 ---
 
@@ -16,14 +16,14 @@ Rotate through these. Never post randomly — every post should belong to one of
 | 4 | **Buyer Survival Tips** | Import scams to avoid, inspection checklist, real cost of ownership (insurance/fuel/service) | Builds trust — you're protecting people, not just showing cars |
 | 5 | **Culture/Reaction** | Trending car spotted in Baku, funny/relatable driving moments, local car culture | Pure engagement/reach driver, humanizes the page |
 
-**Current autopilot rhythm:** 4 posts every day, Baku time:
+**Cari autopilot ritmi:** hər gün 4 post, Bakı vaxtı ilə:
 
-| Time | Format | Goal |
+| Saat | Format | Məqsəd |
 |---|---|---|
-| 09:00 | Owner Choice | Fast “which would you drive?” debate |
-| 13:00 | Real VS Battle | Main carousel comparison |
-| 19:30 | Comment War | Strongest owner-tribe argument |
-| 22:45 | Night Battle | Emotional/performance matchup for reels |
+| 09:00 | Sürücü Seçimi | Sürətli “hansını sürərdin?” mübahisəsi |
+| 13:00 | Real Avto Döyüş | Əsas karusel müqayisəsi |
+| 19:30 | Şərh Savaşı | Ən güclü tərəf seçdirən duel |
+| 22:45 | Gecə Döyüşü | Emosional/performance yönümlü reel |
 
 ---
 
@@ -75,10 +75,10 @@ Prioritize “owner tribes” rather than neutral spec-sheet pairs:
 
 GitHub Actions runs the posting pipeline automatically.
 
-- 09:00 Baku — Owner Choice
-- 13:00 Baku — Real VS Battle
-- 19:30 Baku — Comment War
-- 22:45 Baku — Night Battle
+- 09:00 Bakı — Sürücü Seçimi
+- 13:00 Bakı — Real Avto Döyüş
+- 19:30 Bakı — Şərh Savaşı
+- 22:45 Bakı — Gecə Döyüşü
 
 Manual triggering from the dashboard should use the same four formats. The post generator should not advertise old times or older weekly rhythm.
 

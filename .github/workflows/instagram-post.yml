@@ -2,13 +2,13 @@ name: Instagram Automated Poster
 
 on:
   schedule:
-    # 09:00 AZT -> 05:00 UTC (Owner Choice)
+    # 09:00 AZT -> 05:00 UTC (Sürücü Seçimi)
     - cron: "0 5 * * *"
-    # 13:00 AZT -> 09:00 UTC (Real VS Battle)
+    # 13:00 AZT -> 09:00 UTC (Real Avto Döyüş)
     - cron: "0 9 * * *"
-    # 19:30 AZT -> 15:30 UTC (Comment War)
+    # 19:30 AZT -> 15:30 UTC (Şərh Savaşı)
     - cron: "30 15 * * *"
-    # 22:45 AZT -> 18:45 UTC (Night Battle)
+    # 22:45 AZT -> 18:45 UTC (Gecə Döyüşü)
     - cron: "45 18 * * *"
 
   workflow_dispatch:
