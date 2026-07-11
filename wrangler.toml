@@ -8,6 +8,9 @@ GH_TARGET_REPO = "azvscars-worker"
 GH_TARGET_WORKFLOW = "worker.yml"
 GH_TARGET_REF = "main"
 
+[ai]
+binding = "AI"
+
 # Cloudflare KV binding for Pages Functions
 [[kv_namespaces]]
 binding = "AZVSCARS_KV"
