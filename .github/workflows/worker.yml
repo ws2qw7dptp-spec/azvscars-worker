@@ -4,11 +4,12 @@ name: AZvsCars Worker
   workflow_dispatch:
     inputs:
       action:
-        description: "Action (generate or flip)"
+        description: "Action (generate, flip or stories)"
         type: choice
         options:
           - generate
           - flip
+          - stories
         required: true
         default: "generate"
       sid:

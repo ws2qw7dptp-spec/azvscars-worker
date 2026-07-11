@@ -3,6 +3,7 @@ worker.py — GitHub Actions Worker
 Handles:
   - action=generate: AI comparison -> images -> slides render -> optional reel -> R2 + KV
   - action=flip:     flip a car image and re-render slides
+  - action=stories:  render branded story cards -> R2/KV -> optional publish
 Called by Cloudflare Functions via workflow_dispatch.
 Reports status to Cloudflare KV so frontend can poll /api/status/[sid].
 """
@@ -259,11 +260,52 @@ def action_flip(sid, car):
         set_status(sid, "error", f"❌ Flip xətası: {str(e)}")
         sys.exit(1)
 
+# ─── Story Campaign Action ──────────────────────────────────────────────────
+
+def action_stories(sid, mark_done=True):
+    from story_renderer import render_story_campaign
+
+    try:
+        set_status(sid, "running", "📲 Story kartları hazırlanır…")
+        with tempfile.TemporaryDirectory() as tmp:
+            story_paths = render_story_campaign(tmp)
+            pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
+            story_urls = {
+                filename: f"{pages_base_url}/api/image/{sid}/{filename}"
+                for filename in story_paths
+            }
+            meta = {
+                "sid": sid,
+                "post_type": "stories",
+                "car1_name": "AZvsCars",
+                "car2_name": "Story Campaign",
+                "caption": "AZvsCars story campaign",
+                "story_urls": story_urls,
+                "story_files": list(story_paths.keys()),
+                "created_at": time.strftime("%Y-%m-%d %H:%M"),
+                "is_published": False,
+            }
+            files = {
+                filename: _file_payload(path, "image/jpeg")
+                for filename, path in story_paths.items()
+            }
+            set_status(sid, "running", "☁️ Story kartları Cloudflare-ə göndərilir…")
+            ingest_to_pages(sid, meta, files)
+        if mark_done:
+            set_status(sid, "done", "✅ Story kartları hazırdır!")
+        print(f"[stories] Done. sid={sid}")
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        set_status(sid, "error", f"❌ Story xətası: {str(e)}")
+        sys.exit(1)
+
 # ─── Entrypoint ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--action",       required=True, choices=["generate", "flip"])
+    parser.add_argument("--action",       required=True, choices=["generate", "flip", "stories"])
     parser.add_argument("--sid",          required=True)
     parser.add_argument("--post_type",    default="main")
     parser.add_argument("--make_reel",    default="false")
@@ -309,3 +351,36 @@ if __name__ == "__main__":
                 
     elif args.action == "flip":
         action_flip(args.sid, args.car)
+    elif args.action == "stories":
+        auto_publish = args.auto_publish.lower() == "true"
+        action_stories(args.sid, mark_done=not auto_publish)
+        if auto_publish:
+            try:
+                import requests
+
+                admin_pass = os.environ.get("ADMIN_PASS")
+                pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
+                if not admin_pass:
+                    raise RuntimeError("ADMIN_PASS is required for story auto_publish.")
+                set_status(args.sid, "running", "📲 Story-lər Instagram-a paylaşılır…")
+                for story_file in [
+                    "story1_brand.jpg",
+                    "story2_schedule.jpg",
+                    "story3_topics.jpg",
+                    "story4_contact.jpg",
+                    "story5_comment.jpg",
+                ]:
+                    res = requests.post(
+                        f"{pages_base_url}/api/publish/{args.sid}",
+                        json={"media_type": "story", "story_file": story_file},
+                        headers={"X-Admin-Password": admin_pass},
+                        timeout=60,
+                    )
+                    print(f"[worker] story publish {story_file}: {res.status_code} {res.text}")
+                    res.raise_for_status()
+                    time.sleep(2)
+                set_status(args.sid, "done", "✅ Story-lər hazırlandı və paylaşıldı!")
+            except Exception as e:
+                print(f"[worker] story auto_publish error: {e}")
+                set_status(args.sid, "error", f"❌ Story publish xətası: {e}")
+                sys.exit(1)

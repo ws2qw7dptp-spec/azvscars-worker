@@ -1,6 +1,6 @@
 /**
  * POST /api/publish/[sid]
- * Publishes a post (carousel or reel) directly to Instagram via Meta Graph API.
+ * Publishes a post (carousel, reel or story) directly to Instagram via Meta Graph API.
  * This runs inside Cloudflare Functions — no Python server needed.
  */
 
@@ -23,6 +23,15 @@ function normalizeSlideUrls(meta, baseUrl, sid) {
   // Publish via the stable Pages/R2 proxy. Worker-generated R2 presigned URLs
   // expire after a few days and break delayed publishing.
   return SLIDE_KEYS.map(k => proxiedUrl(baseUrl, sid, k));
+}
+
+function storyUrl(meta, baseUrl, sid, file) {
+  const storyFile = file || "story1_brand.jpg";
+  if (!/^[a-zA-Z0-9_.-]+$/.test(storyFile)) {
+    throw new Error("Story fayl adı yanlışdır.");
+  }
+  const known = meta.story_urls || {};
+  return known[storyFile] || proxiedUrl(baseUrl, sid, storyFile);
 }
 
 export async function onRequestPost({ request, env, params }) {
@@ -53,7 +62,35 @@ export async function onRequestPost({ request, env, params }) {
   try {
     let post_id;
 
-    if (media_type === "reel") {
+    if (media_type === "story") {
+      const image_url = storyUrl(meta, base_url, sid, body.story_file);
+
+      // Step 1: Create STORIES container
+      const r1 = await fetch(`${api_base}/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          media_type: "STORIES",
+          image_url,
+          access_token: ig_token,
+        })
+      });
+      const d1 = await r1.json();
+      if (!r1.ok) throw new Error(JSON.stringify(d1));
+      const container_id = d1.id;
+
+      // Step 2: Publish
+      await sleep(2000);
+      const r2 = await fetch(`${api_base}/media_publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creation_id: container_id, access_token: ig_token })
+      });
+      const d2 = await r2.json();
+      if (!r2.ok) throw new Error(JSON.stringify(d2));
+      post_id = d2.id || "?";
+
+    } else if (media_type === "reel") {
       const reel_url = proxiedUrl(base_url, sid, "reel.mp4");
 
       // Step 1: Create REELS container
