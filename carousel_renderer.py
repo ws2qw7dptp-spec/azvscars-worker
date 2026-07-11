@@ -224,6 +224,10 @@ def build_cover_slide(base: Image.Image, data: dict, out: str):
     draw_badge(draw, title, CANVAS_W // 2, ZONE_TOP_BADGE,
                max_w=940, sz=88, bg=COLOR_RED)
 
+    # Small conversion cue: visible on the first slide without crowding the grid.
+    f_hook = get_font(44)
+    draw_centered(draw, "ŞƏRHDƏ TƏRƏFİNİ SEÇ", f_hook, ZONE_TOP_BADGE + 105, (230, 230, 230))
+
     # VS circle at vertical mid-point of car zone
     vs_y = (ZONE_CAR_TOP + ZONE_CAR_BOT) // 2
     draw_vs_circle(draw, vs_y)

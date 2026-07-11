@@ -116,6 +116,40 @@ def story_comment(path):
     img.save(path, quality=94)
 
 
+def story_china_germany(path):
+    img, draw = base_card()
+    rect_text(draw, "ÇİN vs ALMAN", 610, 92)
+    centered(draw, "BYD • ZEEKR • LI AUTO", 820, 66, WHITE)
+    centered(draw, "MERCEDES • BMW • AUDI", 940, 66, WHITE)
+    centered(draw, "TEXNOLOGİYA", 1110, 84, RED)
+    centered(draw, "YOXSA PRESTİJ?", 1210, 84, RED)
+    footer(draw)
+    img.save(path, quality=94)
+
+
+def story_ev_v8(path):
+    img, draw = base_card()
+    rect_text(draw, "EV vs V8", 610, 98)
+    centered(draw, "ANİ SÜRƏT", 820, 86, WHITE)
+    centered(draw, "YOXSA MÜHƏRRİK SƏSİ?", 940, 76, WHITE)
+    centered(draw, "TESLA • AMG • M", 1110, 72, RED)
+    centered(draw, "SƏNİN TƏRƏFİN HANSIDIR?", 1280, 58, MUTED)
+    footer(draw)
+    img.save(path, quality=94)
+
+
+def story_suv_war(path):
+    img, draw = base_card()
+    rect_text(draw, "SUV DÖYÜŞ", 610, 98)
+    centered(draw, "LAND CRUISER", 820, 84, WHITE)
+    centered(draw, "G-CLASS", 940, 84, WHITE)
+    centered(draw, "LEXUS LX", 1060, 84, WHITE)
+    centered(draw, "RANGE ROVER", 1180, 84, WHITE)
+    centered(draw, "ETİBAR YOXSA STATUS?", 1350, 58, RED)
+    footer(draw)
+    img.save(path, quality=94)
+
+
 def render_story_campaign(output_dir, email="islammuradov1@icloud.com"):
     os.makedirs(output_dir, exist_ok=True)
     stories = {
@@ -124,6 +158,9 @@ def render_story_campaign(output_dir, email="islammuradov1@icloud.com"):
         "story3_topics.jpg": story_topics,
         "story4_contact.jpg": lambda p: story_contact(p, email),
         "story5_comment.jpg": story_comment,
+        "story6_china_germany.jpg": story_china_germany,
+        "story7_ev_v8.jpg": story_ev_v8,
+        "story8_suv_war.jpg": story_suv_war,
     }
     paths = {}
     for name, builder in stories.items():

@@ -436,7 +436,7 @@ def curated_comparison(post_type="main") -> dict:
         "slide2_title": "MÜHƏRRİK VƏ GÜC",
         "slide3_title": "0-100 KM/S",
         "slide4_title": "BAŞLANĞIC QİYMƏTİ",
-        "hashtags": "#azvscars #azerbaijan #avto #baku #masin #cars",
+        "hashtags": "#azvscars #azerbaijan #avto #baku #masin #avtomobil #masinlar",
     })
     return item
 
@@ -489,13 +489,13 @@ def generate_comparison(post_type="main") -> dict:
     
     # Customize instructions based on post_type
     if post_type == "quick":
-        post_instruction = "POST TYPE: 'Quick Choice'. The caption MUST be short and ask 'Sürmək üçün birini seç: A yoxsa B? Məncə bu seçim çox çətindir 👀'. Cars should be simple, highly recognizable."
+        post_instruction = "POST TYPE: 'Sürücü Seçimi'. Pick a controversial owner-tribe matchup. Caption must ask which car they would drive and include a short follow CTA in Azerbaijani."
     elif post_type == "war":
-        post_instruction = "POST TYPE: 'Comment War'. The caption MUST ask '100.000 AZN olsa hansını alardın? Sol yoxsa sağ? Cavabı kommentə yaz. Sabah ən çox seçilən maşını yeni rəqiblə çıxarıram.'. Pick expensive cars around 100k budget."
+        post_instruction = "POST TYPE: 'Şərh Savaşı'. Pick a pair that splits car owners into two sides. Caption must ask sol yoxsa sağ and include 'bizi izlə' naturally."
     elif post_type == "night":
-        post_instruction = "POST TYPE: 'Dark Night Battle'. The caption MUST ask 'Gecə Bakıda sürmək üçün hansını seçərdin? 1 sözlə yaz: sol yoxsa sağ?'. Pick aggressive, loud cars (e.g. C63, M5, RS7)."
+        post_instruction = "POST TYPE: 'Gecə Döyüşü'. Pick aggressive cars with fanbases. Caption must ask which key they would take at night in Baku and ask for a comment."
     else:
-        post_instruction = "POST TYPE: 'Real VS Battle'. The caption MUST compare 3 features briefly and ask 'Hansı qalibdir?'. Keep it under 5 bullet points."
+        post_instruction = "POST TYPE: 'Real Avto Döyüş'. Pick a debate-driven matchup with owner loyalty. Caption must compare briefly and ask what matters more: marka, texnologiya, etibarlılıq or sürüş hissi."
     
     prompt_content = f"Generate a new, random car comparison. Random Seed: {seed}.\n{post_instruction}\nReturn ONLY the JSON object, no explanation."
     

@@ -369,6 +369,9 @@ if __name__ == "__main__":
                     "story3_topics.jpg",
                     "story4_contact.jpg",
                     "story5_comment.jpg",
+                    "story6_china_germany.jpg",
+                    "story7_ev_v8.jpg",
+                    "story8_suv_war.jpg",
                 ]:
                     res = requests.post(
                         f"{pages_base_url}/api/publish/{args.sid}",
