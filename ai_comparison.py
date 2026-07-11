@@ -15,7 +15,11 @@ CRITICAL LANGUAGE RULES:
 - battle_title must be 2-4 words MAX, real Azerbaijani, related to the specific cars. Examples: "ALMAN DÖYÜŞÜ", "SUV YARIŞI", "SEDAN RƏQABƏTI", "İTALYAN ZƏFƏRI", "FRANSIZ DÖYÜŞÜ", "ELEKTRİK YARIŞI"
 - battle_title must be 2-4 words MAX, real Azerbaijani, related to the specific cars. Examples: "ALMAN DÖYÜŞÜ", "SUV YARIŞI", "SEDAN RƏQABƏTI", "İTALYAN ZƏFƏRI", "FRANSIZ DÖYÜŞÜ", "ELEKTRİK YARIŞI"
 
-Pick two cars that compete directly (BMW M3 vs Mercedes C63, Toyota Camry vs Honda Accord, Range Rover vs G-Class, Porsche 911 vs Audi R8, Ford Mustang vs Chevy Camaro, etc.).
+Pick controversial, owner-tribe matchups that make people defend their side, similar to Barcelona vs Real Madrid debates.
+Prefer pairs with a clear argument: China vs Germany, EV vs petrol, old-school V8 vs modern hybrid, Toyota/Lexus reliability vs German status, Tesla tech vs BMW/Mercedes luxury, Korean value vs Japanese reliability, American muscle vs European precision.
+The cars do not always need to be exact same-class twins, but they must be realistically cross-shopped or culturally debated by car owners.
+Good examples: BYD Seal vs Mercedes-Benz C-Class, Zeekr 001 vs Mercedes EQE, NIO ET5 vs BMW i4, Li Auto L9 vs Mercedes GLE, Tesla Model 3 Performance vs BMW M3, Toyota Land Cruiser vs Mercedes G-Class, Lexus LX vs Range Rover, old C63 V8 vs new C63 hybrid, Mustang GT vs BMW M4, Hyundai Ioniq 5 N vs Volkswagen Golf R.
+Avoid boring random pairings that will not create comments.
 Vary the pairs every time. Provide ONLY accurate, real-world specs.
 
 Output ONLY valid JSON, absolutely no other text:
@@ -41,6 +45,34 @@ Output ONLY valid JSON, absolutely no other text:
 
 CURATED_MATCHUPS = {
     "quick": [
+        {
+            "car1_name": "BYD Seal",
+            "car2_name": "Mercedes-Benz C-Class",
+            "car1_search_query": "BYD Seal side view",
+            "car2_search_query": "Mercedes-Benz C-Class W206 side view",
+            "battle_title": "ÇİN YOXSA ALMAN",
+            "slide2_car1_stat": "Dual motor / 523 HP",
+            "slide2_car2_stat": "2.0L I4 / 255 HP",
+            "slide3_car1_stat": "3.8 san.",
+            "slide3_car2_stat": "6.0 san.",
+            "slide4_car1_stat": "$49,000",
+            "slide4_car2_stat": "$48,000",
+            "caption": "Sürmək üçün birini seç: yeni Çin texnologiyası yoxsa klassik Mercedes imici? Bu seçim artıq çox adamı iki tərəfə bölür.",
+        },
+        {
+            "car1_name": "Tesla Model 3 Performance",
+            "car2_name": "BMW M3 Competition",
+            "car1_search_query": "Tesla Model 3 Performance side view",
+            "car2_search_query": "BMW M3 Competition G80 side view",
+            "battle_title": "EV YOXSA BENZİN",
+            "slide2_car1_stat": "Dual motor / 510 HP",
+            "slide2_car2_stat": "3.0L I6 / 503 HP",
+            "slide3_car1_stat": "3.1 san.",
+            "slide3_car2_stat": "3.8 san.",
+            "slide4_car1_stat": "$53,000",
+            "slide4_car2_stat": "$76,000",
+            "caption": "Sürmək üçün birini seç: ani elektrik zərbəsi yoxsa M ruhu? Burada texnologiya və sürücü hissi üz-üzədir.",
+        },
         {
             "car1_name": "BMW M4 Competition",
             "car2_name": "Audi RS5 Coupe",
@@ -128,6 +160,34 @@ CURATED_MATCHUPS = {
     ],
     "main": [
         {
+            "car1_name": "Zeekr 001",
+            "car2_name": "Mercedes-Benz EQE",
+            "car1_search_query": "Zeekr 001 side view",
+            "car2_search_query": "Mercedes-Benz EQE side view",
+            "battle_title": "ÇİN PREMIUMU",
+            "slide2_car1_stat": "Dual motor / 536 HP",
+            "slide2_car2_stat": "Dual motor / 402 HP",
+            "slide3_car1_stat": "3.8 san.",
+            "slide3_car2_stat": "4.5 san.",
+            "slide4_car1_stat": "$60,000",
+            "slide4_car2_stat": "$77,000",
+            "caption": "Zeekr rəqəmlərlə hücum edir, EQE isə Mercedes imici və rahatlığı ilə cavab verir. Premium seçimdə marka vacibdir, yoxsa texnologiya?",
+        },
+        {
+            "car1_name": "Toyota Land Cruiser 300",
+            "car2_name": "Mercedes-Benz G 500",
+            "car1_search_query": "Toyota Land Cruiser 300 side view",
+            "car2_search_query": "Mercedes-Benz G 500 side view",
+            "battle_title": "ETİBAR YOXSA STATUS",
+            "slide2_car1_stat": "3.4L V6 / 409 HP",
+            "slide2_car2_stat": "4.0L V8 / 416 HP",
+            "slide3_car1_stat": "6.7 san.",
+            "slide3_car2_stat": "5.9 san.",
+            "slide4_car1_stat": "$85,000",
+            "slide4_car2_stat": "$148,000",
+            "caption": "Land Cruiser uzunömürlülük simvoludur, G-Class isə statusun özüdür. Bakıda hansı seçim daha ağıllıdır?",
+        },
+        {
             "car1_name": "BMW M5 Competition",
             "car2_name": "Mercedes-AMG E63 S",
             "car1_search_query": "BMW M5 Competition F90 side view",
@@ -213,6 +273,34 @@ CURATED_MATCHUPS = {
         },
     ],
     "war": [
+        {
+            "car1_name": "Li Auto L9",
+            "car2_name": "Mercedes-Benz GLE 450",
+            "car1_search_query": "Li Auto L9 side view",
+            "car2_search_query": "Mercedes-Benz GLE 450 side view",
+            "battle_title": "ÇİN YOXSA MERCEDES",
+            "slide2_car1_stat": "EREV / 449 HP",
+            "slide2_car2_stat": "3.0L I6 / 375 HP",
+            "slide3_car1_stat": "5.3 san.",
+            "slide3_car2_stat": "5.6 san.",
+            "slide4_car1_stat": "$62,000",
+            "slide4_car2_stat": "$70,000",
+            "caption": "Bu duel car-owner mübahisəsidir: Li Auto L9 yoxsa Mercedes GLE? Biri texnologiya ilə, biri marka gücü ilə gəlir. Sol yoxsa sağ?",
+        },
+        {
+            "car1_name": "Lexus LX 600",
+            "car2_name": "Range Rover P530",
+            "car1_search_query": "Lexus LX 600 side view",
+            "car2_search_query": "Range Rover P530 side view",
+            "battle_title": "ETİBAR YOXSA LÜKS",
+            "slide2_car1_stat": "3.4L V6 / 409 HP",
+            "slide2_car2_stat": "4.4L V8 / 523 HP",
+            "slide3_car1_stat": "6.9 san.",
+            "slide3_car2_stat": "4.6 san.",
+            "slide4_car1_stat": "$93,000",
+            "slide4_car2_stat": "$131,000",
+            "caption": "Bir tərəfdə Lexus etibarı, digər tərəfdə Range Rover lüksü. Uzun illər üçün hansını seçərdin?",
+        },
         {
             "car1_name": "BMW X5 M50i",
             "car2_name": "Mercedes-AMG GLE 53",

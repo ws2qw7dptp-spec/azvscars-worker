@@ -4,7 +4,11 @@ Pick two real, well-known competing cars and write a detailed comparison post in
 Rules:
 - Output ONLY valid JSON, no markdown and no explanation.
 - Write natural Azerbaijani with correct spelling.
-- Pick direct competitors and vary the pair every time.
+- Pick controversial, owner-tribe matchups that make people defend their side, similar to Barcelona vs Real Madrid debates.
+- Prefer matchups with a clear argument: China vs Germany, EV vs petrol, old-school V8 vs modern hybrid, Toyota/Lexus reliability vs German status, Tesla tech vs BMW/Mercedes luxury, Korean value vs Japanese reliability, American muscle vs European precision.
+- The cars do not always need to be exact same-class twins, but they must be realistically cross-shopped or culturally debated by car owners.
+- Good examples: BYD Seal vs Mercedes-Benz C-Class, Zeekr 001 vs Mercedes EQE, NIO ET5 vs BMW i4, Li Auto L9 vs Mercedes GLE, Tesla Model 3 Performance vs BMW M3, Toyota Land Cruiser vs Mercedes G-Class, Lexus LX vs Range Rover, old C63 V8 vs new C63 hybrid, Mustang GT vs BMW M4, Hyundai Ioniq 5 N vs Volkswagen Golf R.
+- Avoid boring random pairings that will not create comments.
 - Use accurate real-world specs.
 - battle_title must be 2-4 words max.
 - Captions must be catchy for car owners and enthusiasts in Azerbaijan.
@@ -50,15 +54,15 @@ const REQUIRED_FIELDS = [
 
 function instructionFor(postType) {
   if (postType === "quick") {
-    return "POST TYPE: Quick Choice. Pick highly recognizable cars. Caption should ask which one they would drive.";
+    return "POST TYPE: Quick Choice. Pick a highly recognizable tribal matchup that owners will argue about. Strongly prefer China vs Germany, EV vs petrol, Tesla vs German luxury, Japanese reliability vs German prestige, or old V8 vs modern hybrid.";
   }
   if (postType === "war") {
-    return "POST TYPE: Comment War. Pick expensive status cars around a strong enthusiast budget. Caption must push comments: sol yoxsa sağ?";
+    return "POST TYPE: Comment War. Pick the most controversial status matchup possible: Chinese premium SUV/EV vs Mercedes/BMW/Range Rover, G-Class vs Land Cruiser, Lexus vs Range Rover, Tesla vs BMW/Mercedes, or V8 old generation vs new hybrid. The pair must naturally split car owners into two sides.";
   }
   if (postType === "night") {
-    return "POST TYPE: Dark Night Battle. Pick aggressive, loud, night-drive cars. Caption should feel bold and short.";
+    return "POST TYPE: Dark Night Battle. Pick aggressive cars with fanbases: AMG vs M, RS vs M, Mustang vs M4, old V8 AMG vs new hybrid AMG, GT-R vs 911 Turbo, or Hellcat vs European performance.";
   }
-  return "POST TYPE: Real VS Battle. Compare power, speed, price/value, and ask which one wins.";
+  return "POST TYPE: Real VS Battle. Pick a debate-driven matchup with owner loyalty. Prioritize China vs Germany, EV vs petrol, reliability vs prestige, value vs badge, old-school engine vs new technology.";
 }
 
 function extractJson(text) {
@@ -76,7 +80,45 @@ function validateComparison(value) {
   if (missing.length) {
     throw new Error(`AI JSON missing fields: ${missing.join(", ")}`);
   }
+  for (const field of ["slide2_car1_stat", "slide2_car2_stat"]) {
+    if (!/HP|Elektrik|EREV/i.test(value[field])) {
+      throw new Error(`AI JSON has invalid power stat: ${field}`);
+    }
+  }
   return value;
+}
+
+function normalizeSearchQuery(name) {
+  return `${name} side view`;
+}
+
+function normalizePowerStat(name, stat) {
+  const text = String(stat || "");
+  const baseText = text.split(",")[0].trim();
+  const hp = text.match(/(\d{3,4})\s*HP/i)?.[1];
+  const lowerName = String(name || "").toLowerCase();
+  if (lowerName.includes("li auto")) {
+    return hp ? `EREV / ${hp} HP` : "EREV";
+  }
+  const electricNames = [
+    "tesla",
+    "byd",
+    "zeekr",
+    "nio",
+    "xpeng",
+    "avatr",
+    "polestar",
+    "ioniq",
+    "taycan",
+    "eqe",
+    "eqs",
+    "bmw i",
+  ];
+  const isElectric = electricNames.some((brand) => lowerName.includes(brand));
+  if (!isElectric) {
+    return baseText || text;
+  }
+  return hp ? `Elektrik / ${hp} HP` : "Elektrik mühərrik";
 }
 
 function polishComparison(value, postType) {
@@ -85,21 +127,25 @@ function polishComparison(value, postType) {
   clean.slide3_title = "0-100 KM/S";
   clean.slide4_title = "BAŞLANĞIC QİYMƏTİ";
   clean.hashtags = "#azvscars #azerbaijan #avto #baku #masin #cars";
+  clean.car1_search_query = normalizeSearchQuery(clean.car1_name);
+  clean.car2_search_query = normalizeSearchQuery(clean.car2_name);
+  clean.slide2_car1_stat = normalizePowerStat(clean.car1_name, clean.slide2_car1_stat);
+  clean.slide2_car2_stat = normalizePowerStat(clean.car2_name, clean.slide2_car2_stat);
 
   const a = clean.car1_name || "birinci avtomobil";
   const b = clean.car2_name || "ikinci avtomobil";
   if (postType === "quick") {
     clean.battle_title = "SÜRÜCÜ SEÇİMİ";
-    clean.caption = `Sürmək üçün birini seç: ${a} yoxsa ${b}? Biri xarakteri ilə, biri performansı ilə diqqət çəkir. Sənin seçimin hansıdır?`;
+    clean.caption = `Sürmək üçün birini seç: ${a} yoxsa ${b}? Bu seçim sadəcə rəqəm deyil, zövq və tərəf məsələsidir. Sənin tərəfin hansıdır?`;
   } else if (postType === "war") {
     clean.battle_title = "ŞƏRH SAVAŞI";
-    clean.caption = `100.000 AZN büdcə olsa hansını alardın: ${a} yoxsa ${b}? Sol yoxsa sağ? Cavabı kommentə yaz.`;
+    clean.caption = `Bu duel car-owner mübahisəsidir: ${a} yoxsa ${b}? Biri ağılla, biri imiclə qalib gəlir deyənlər olacaq. Sol yoxsa sağ? Cavabı kommentə yaz.`;
   } else if (postType === "night") {
     clean.battle_title = "GECƏ DÖYÜŞÜ";
-    clean.caption = `Gecə Bakıda sürmək üçün hansını seçərdin: ${a} yoxsa ${b}? Səs, görüntü və sürət baxımından bu duel çox sərtdir. Cavabı kommentə yaz.`;
+    clean.caption = `Gecə Bakıda hansının açarını götürərdin: ${a} yoxsa ${b}? Səs, görüntü və xarakter baxımından bu seçim fanatları böləcək. Cavabı kommentə yaz.`;
   } else {
     clean.battle_title = "AVTO DÖYÜŞÜ";
-    clean.caption = `${a} və ${b} eyni səhnədə olsa, seçim asan deyil. Güc, sürət və qiymət balansında hansını qalib görürsən?`;
+    clean.caption = `${a} və ${b} eyni səhnədə olsa, mübahisə başlayır. Səncə burada daha vacib olan nədir: marka, texnologiya, etibarlılıq, yoxsa sürüş hissi?`;
   }
   return clean;
 }
