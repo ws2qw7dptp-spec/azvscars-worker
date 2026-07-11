@@ -2,14 +2,14 @@ name: Instagram Automated Poster
 
 on:
   schedule:
-    # 09:00 AZT -> 08:50 AZT -> 04:50 UTC (Quick Choice)
-    - cron: "50 4 * * *"
-    # 13:00 AZT -> 12:50 AZT -> 08:50 UTC (Main VS Battle)
-    - cron: "50 8 * * *"
-    # 19:30 AZT -> 19:20 AZT -> 15:20 UTC (Comment War)
-    - cron: "20 15 * * *"
-    # 22:45 AZT -> 22:35 AZT -> 18:35 UTC (Dark Night)
-    - cron: "35 18 * * *"
+    # 09:00 AZT -> 05:00 UTC (Owner Choice)
+    - cron: "0 5 * * *"
+    # 13:00 AZT -> 09:00 UTC (Real VS Battle)
+    - cron: "0 9 * * *"
+    # 19:30 AZT -> 15:30 UTC (Comment War)
+    - cron: "30 15 * * *"
+    # 22:45 AZT -> 18:45 UTC (Night Battle)
+    - cron: "45 18 * * *"
 
   workflow_dispatch:
     inputs:
@@ -49,13 +49,13 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "POST_TYPE=${{ github.event.inputs.type }}" >> "$GITHUB_ENV"
           else
-            if [[ "${{ github.event.schedule }}" == "50 4 * * *" ]]; then
+            if [[ "${{ github.event.schedule }}" == "0 5 * * *" ]]; then
               echo "POST_TYPE=quick" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "50 8 * * *" ]]; then
+            elif [[ "${{ github.event.schedule }}" == "0 9 * * *" ]]; then
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "20 15 * * *" ]]; then
+            elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
               echo "POST_TYPE=war" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "35 18 * * *" ]]; then
+            elif [[ "${{ github.event.schedule }}" == "45 18 * * *" ]]; then
               echo "POST_TYPE=night" >> "$GITHUB_ENV"
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"

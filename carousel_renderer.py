@@ -265,7 +265,7 @@ def build_stat_slide(base: Image.Image, title: str,
 
 
 def build_outro_slide(base: Image.Image, out: str):
-    """Slide 5 – CTA with schedule times."""
+    """Slide 5 – CTA with the current four-post daily schedule."""
     img = base.copy()
     img.alpha_composite(Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 215)))
     draw = ImageDraw.Draw(img)
@@ -275,21 +275,22 @@ def build_outro_slide(base: Image.Image, out: str):
     draw_centered(draw, "@azvscars", f_handle, 320, (200, 200, 200))
 
     # Big CTA
-    f_cta = get_font(130)
-    draw_centered(draw, "BİZİ İZLƏYİN!", f_cta, 440, COLOR_WHITE)
+    f_cta = get_font(122)
+    draw_centered(draw, "TƏRƏFİNİ SEÇ!", f_cta, 430, COLOR_WHITE)
 
     # Divider line
-    draw.line([(120, 620), (CANVAS_W - 120, 620)], fill=COLOR_RED, width=3)
+    draw.line([(120, 585), (CANVAS_W - 120, 585)], fill=COLOR_RED, width=3)
 
     # Schedule
     f_label = get_font(58)
-    draw_centered(draw, "HƏR GÜN EYNİ VAXTDA", f_label, 650, (210, 210, 210))
+    draw_centered(draw, "HƏR GÜN 4 AVTO DÖYÜŞ", f_label, 625, (210, 210, 210))
 
-    f_time = get_font(110)
-    draw_centered(draw, "12:30  /  19:00", f_time, 740, COLOR_RED)
+    f_time = get_font(82)
+    draw_centered(draw, "09:00  /  13:00", f_time, 720, COLOR_RED)
+    draw_centered(draw, "19:30  /  22:45", f_time, 810, COLOR_RED)
 
     f_zone = get_font(44)
-    draw_centered(draw, "BAKI VAXTI İLƏ", f_zone, 870, (160, 160, 160))
+    draw_centered(draw, "BAKI VAXTI İLƏ", f_zone, 910, (160, 160, 160))
 
     img.convert("RGB").save(out)
 
