@@ -2,6 +2,30 @@ import cv2
 import os
 import ffmpeg
 import imageio_ffmpeg
+import hashlib
+
+DEFAULT_AUDIO_FILES = [
+    "mercy-line-vs-m5.mp3",
+    "chrome-split.mp3",
+    "phonk.mp3",
+]
+
+def select_audio_file(output_path: str):
+    override = os.environ.get("REEL_AUDIO_FILE", "").strip()
+    candidates = [override] if override else DEFAULT_AUDIO_FILES
+
+    existing = []
+    for name in candidates:
+        path = name if os.path.isabs(name) else os.path.join("assets", name)
+        if os.path.exists(path):
+            existing.append(path)
+
+    if not existing:
+        return None
+
+    seed = os.path.basename(os.path.dirname(output_path)) or os.path.basename(output_path)
+    digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
+    return existing[int(digest[:8], 16) % len(existing)]
 
 def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=1.5):
     """
@@ -47,9 +71,10 @@ def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=
         video.release()
         
     # Mux audio and video
-    audio_file = os.path.join("assets", "phonk.mp3")
-    if os.path.exists(audio_file):
+    audio_file = select_audio_file(output_path)
+    if audio_file:
         try:
+            print(f"[reel] Using audio: {audio_file}")
             # Get the path to the internal ffmpeg executable downloaded by imageio_ffmpeg
             ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
             

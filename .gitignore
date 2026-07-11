@@ -15,7 +15,8 @@ env/
 output/
 .wrangler/
 .actions-runner/
-assets/
+assets/*
+!assets/*.mp3
 sessions.json
 *.jpg
 *.png
