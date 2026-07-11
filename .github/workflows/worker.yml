@@ -50,6 +50,11 @@ name: AZvsCars Worker
           - "true"
         required: false
         default: "false"
+      story_files:
+        description: "Comma-separated story files for stories action"
+        type: string
+        required: false
+        default: ""
 
 jobs:
   run-worker:
@@ -94,4 +99,5 @@ jobs:
             --post_type "${{ github.event.inputs.post_type }}" \
             --make_reel "${{ github.event.inputs.make_reel }}" \
             --car "${{ github.event.inputs.car }}" \
-            --auto_publish "${{ github.event.inputs.auto_publish }}"
+            --auto_publish "${{ github.event.inputs.auto_publish }}" \
+            --story_files "${{ github.event.inputs.story_files }}"

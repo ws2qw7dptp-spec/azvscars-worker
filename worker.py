@@ -28,6 +28,9 @@ def set_status(sid, status, message):
     except Exception as e:
         print(f"[status] KV write failed: {e}")
 
+def pages_base_url():
+    return (os.environ.get("PAGES_BASE_URL") or "https://azvscars.pages.dev").rstrip("/")
+
 # ─── Render & Upload Slides ───────────────────────────────────────────────────
 
 def render_and_upload(sid, data, img1_path, img2_path, flip1, flip2, tmp_dir):
@@ -132,12 +135,11 @@ def _file_payload(path, content_type):
 
 def ingest_to_pages(sid, meta, files):
     admin_pass = os.environ.get("ADMIN_PASS")
-    pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
     if not admin_pass:
         raise RuntimeError("ADMIN_PASS is required for Pages ingest.")
     payload = {"meta": meta, "files": files}
     res = http_req.post(
-        f"{pages_base_url}/api/ingest/{sid}",
+        f"{pages_base_url()}/api/ingest/{sid}",
         json=payload,
         headers={"X-Admin-Password": admin_pass},
         timeout=180,
@@ -170,7 +172,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
             if use_pages_ingest:
                 slide_paths = render_local_slides(data, img1_path, img2_path, flip1, flip2, tmp)
                 slide_urls = {
-                    filename: f"{os.environ.get('PAGES_BASE_URL', 'https://azvscars.pages.dev').rstrip('/')}/api/image/{sid}/{filename}"
+                    filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
                     for filename in SLIDE_KEYS
                 }
             else:
@@ -185,7 +187,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 local_slide_list = [os.path.join(tmp, k) for k in SLIDE_KEYS]
                 reel_renderer.render_reel(local_slide_list, local_reel)
                 if use_pages_ingest:
-                    reel_url = f"{os.environ.get('PAGES_BASE_URL', 'https://azvscars.pages.dev').rstrip('/')}/api/image/{sid}/reel.mp4"
+                    reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4"
                 else:
                     reel_url = cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4")
 
@@ -269,9 +271,8 @@ def action_stories(sid, mark_done=True):
         set_status(sid, "running", "📲 Story kartları hazırlanır…")
         with tempfile.TemporaryDirectory() as tmp:
             story_paths = render_story_campaign(tmp)
-            pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
             story_urls = {
-                filename: f"{pages_base_url}/api/image/{sid}/{filename}"
+                filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
                 for filename in story_paths
             }
             meta = {
@@ -311,6 +312,7 @@ if __name__ == "__main__":
     parser.add_argument("--make_reel",    default="false")
     parser.add_argument("--car",          default="1", type=int)
     parser.add_argument("--auto_publish", default="false")
+    parser.add_argument("--story_files",   default="")
     args = parser.parse_args()
 
     print(f"[worker] action={args.action} sid={args.sid}")
@@ -327,12 +329,11 @@ if __name__ == "__main__":
                 import os
                 
                 admin_pass = os.environ.get("ADMIN_PASS")
-                pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
                 if not admin_pass:
                     raise RuntimeError("ADMIN_PASS is required for auto_publish.")
 
                 set_status(args.sid, "running", "🚀 Instagram-a avtomatik paylaşılır…")
-                url = f"{pages_base_url}/api/publish/{args.sid}"
+                url = f"{pages_base_url()}/api/publish/{args.sid}"
                 
                 media_type = "reel" if args.make_reel.lower() == "true" else "carousel"
                 
@@ -359,11 +360,9 @@ if __name__ == "__main__":
                 import requests
 
                 admin_pass = os.environ.get("ADMIN_PASS")
-                pages_base_url = os.environ.get("PAGES_BASE_URL", "https://azvscars.pages.dev").rstrip("/")
                 if not admin_pass:
                     raise RuntimeError("ADMIN_PASS is required for story auto_publish.")
-                set_status(args.sid, "running", "📲 Story-lər Instagram-a paylaşılır…")
-                for story_file in [
+                default_story_files = [
                     "story1_brand.jpg",
                     "story2_schedule.jpg",
                     "story3_topics.jpg",
@@ -372,9 +371,21 @@ if __name__ == "__main__":
                     "story6_china_germany.jpg",
                     "story7_ev_v8.jpg",
                     "story8_suv_war.jpg",
-                ]:
+                ]
+                selected_story_files = [
+                    item.strip()
+                    for item in args.story_files.split(",")
+                    if item.strip()
+                ] or default_story_files
+                allowed_story_files = set(default_story_files)
+                invalid = [name for name in selected_story_files if name not in allowed_story_files]
+                if invalid:
+                    raise RuntimeError(f"Invalid story_files: {', '.join(invalid)}")
+
+                set_status(args.sid, "running", "📲 Story-lər Instagram-a paylaşılır…")
+                for story_file in selected_story_files:
                     res = requests.post(
-                        f"{pages_base_url}/api/publish/{args.sid}",
+                        f"{pages_base_url()}/api/publish/{args.sid}",
                         json={"media_type": "story", "story_file": story_file},
                         headers={"X-Admin-Password": admin_pass},
                         timeout=60,

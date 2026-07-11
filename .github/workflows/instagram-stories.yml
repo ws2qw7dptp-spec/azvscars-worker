@@ -1,0 +1,89 @@
+name: Instagram Daily Stories
+
+on:
+  schedule:
+    # 08:45 AZT -> 04:45 UTC: brand + daily schedule
+    - cron: "45 4 * * *"
+    # 14:30 AZT -> 10:30 UTC: topic reminders
+    - cron: "30 10 * * *"
+    # 20:45 AZT -> 16:45 UTC: comment CTA + evening topics
+    - cron: "45 16 * * *"
+
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "Story slot"
+        required: true
+        default: "morning"
+        type: choice
+        options:
+          - morning
+          - noon
+          - evening
+          - all
+
+jobs:
+  post-stories:
+    runs-on: ubuntu-latest
+
+    env:
+      ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
+      PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
+      INGEST_VIA_PAGES: "true"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Determine Story Set
+        run: |
+          SLOT="${{ github.event.inputs.slot }}"
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            if [[ "${{ github.event.schedule }}" == "45 4 * * *" ]]; then
+              SLOT="morning"
+            elif [[ "${{ github.event.schedule }}" == "30 10 * * *" ]]; then
+              SLOT="noon"
+            elif [[ "${{ github.event.schedule }}" == "45 16 * * *" ]]; then
+              SLOT="evening"
+            else
+              SLOT="morning"
+            fi
+          fi
+
+          if [[ "$SLOT" == "morning" ]]; then
+            STORY_FILES="story1_brand.jpg,story2_schedule.jpg"
+          elif [[ "$SLOT" == "noon" ]]; then
+            STORY_FILES="story3_topics.jpg,story6_china_germany.jpg,story7_ev_v8.jpg"
+          elif [[ "$SLOT" == "evening" ]]; then
+            STORY_FILES="story5_comment.jpg,story8_suv_war.jpg"
+            # Sponsorluq/əlaqə story-si həftədə 3 dəfə: bazar ertəsi, çərşənbə, cümə.
+            DOW="$(TZ=Asia/Baku date +%u)"
+            if [[ "$DOW" == "1" || "$DOW" == "3" || "$DOW" == "5" ]]; then
+              STORY_FILES="$STORY_FILES,story4_contact.jpg"
+            fi
+          else
+            STORY_FILES="story1_brand.jpg,story2_schedule.jpg,story3_topics.jpg,story4_contact.jpg,story5_comment.jpg,story6_china_germany.jpg,story7_ev_v8.jpg,story8_suv_war.jpg"
+          fi
+
+          echo "STORY_SLOT=$SLOT" >> "$GITHUB_ENV"
+          echo "STORY_FILES=$STORY_FILES" >> "$GITHUB_ENV"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Publish Stories
+        run: |
+          SID="storyauto$(TZ=Asia/Baku date +%Y%m%d%H%M%S)-$STORY_SLOT"
+          python worker.py \
+            --action stories \
+            --sid "$SID" \
+            --auto_publish true \
+            --story_files "$STORY_FILES"
