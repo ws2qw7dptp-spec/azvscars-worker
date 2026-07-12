@@ -175,7 +175,12 @@ def action_cinematic_generate(sid, mark_done=True):
         }
 
         set_status(sid, "running", "🏎 Video və real səs effektləri axtarılır…")
-        media = download_cinematic_assets(reel_type, os.path.join(tmp, "cinematic_assets"))
+        media = download_cinematic_assets(
+            reel_type,
+            os.path.join(tmp, "cinematic_assets"),
+            car1=data["car1_name"],
+            car2=data["car2_name"],
+        )
         if not media["videos"]:
             raise RuntimeError(f"Cinematic video tapılmadı. Fallback lazımdır. Errors: {media.get('errors')}")
 
@@ -189,6 +194,7 @@ def action_cinematic_generate(sid, mark_done=True):
             local_reel,
             script,
             sfx_paths=media["sfx"],
+            source_video_paths=media["videos"],
         )
         reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
 
@@ -202,7 +208,12 @@ def action_cinematic_generate(sid, mark_done=True):
             "flip1": flip1,
             "flip2": flip2,
             "caption": caption,
-            "data": {**data, "cinematic_script": script, "cinematic_media_errors": media.get("errors", [])},
+            "data": {
+                **data,
+                "cinematic_script": script,
+                "cinematic_sources": media.get("sources", []),
+                "cinematic_media_errors": media.get("errors", []),
+            },
             "slide_urls": slide_urls,
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
             "created_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -349,13 +360,15 @@ def action_flip(sid, car):
 
 # ─── Story Campaign Action ──────────────────────────────────────────────────
 
-def action_stories(sid, mark_done=True):
+def action_stories(sid, story_slot="all", mark_done=True):
     from story_renderer import render_story_campaign
+    from ai_comparison import generate_comparison
 
     try:
         set_status(sid, "running", "📲 Story kartları hazırlanır…")
         with tempfile.TemporaryDirectory() as tmp:
-            story_paths = render_story_campaign(tmp)
+            daily_data = generate_comparison(post_type="main")
+            story_paths = render_story_campaign(tmp, daily_data=daily_data)
             story_urls = {
                 filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
                 for filename in story_paths
@@ -363,9 +376,11 @@ def action_stories(sid, mark_done=True):
             meta = {
                 "sid": sid,
                 "post_type": "stories",
+                "story_slot": story_slot,
                 "car1_name": "AZvsCars",
                 "car2_name": "Story Campaign",
-                "caption": "AZvsCars story campaign",
+                "caption": "AZvsCars gündəlik story axını",
+                "data": {"daily_comparison": daily_data},
                 "story_urls": story_urls,
                 "story_files": list(story_paths.keys()),
                 "created_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -398,6 +413,7 @@ if __name__ == "__main__":
     parser.add_argument("--car",          default="1", type=int)
     parser.add_argument("--auto_publish", default="false")
     parser.add_argument("--story_files",   default="")
+    parser.add_argument("--story_slot",    default="all", choices=["morning", "noon", "evening", "all"])
     args = parser.parse_args()
 
     print(f"[worker] action={args.action} sid={args.sid}")
@@ -439,7 +455,7 @@ if __name__ == "__main__":
         action_flip(args.sid, args.car)
     elif args.action == "stories":
         auto_publish = args.auto_publish.lower() == "true"
-        action_stories(args.sid, mark_done=not auto_publish)
+        action_stories(args.sid, story_slot=args.story_slot, mark_done=not auto_publish)
         if auto_publish:
             try:
                 import requests
@@ -456,6 +472,8 @@ if __name__ == "__main__":
                     "story6_china_germany.jpg",
                     "story7_ev_v8.jpg",
                     "story8_suv_war.jpg",
+                    "story9_daily_duel.jpg",
+                    "story10_daily_question.jpg",
                 ]
                 selected_story_files = [
                     item.strip()
