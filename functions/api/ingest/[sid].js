@@ -87,6 +87,7 @@ export async function onRequestPost({ request, env, params }) {
     index.unshift({
       sid,
       post_type: meta.post_type || "",
+      story_slot: meta.story_slot || "",
       car1: meta.car1_name || "",
       car2: meta.car2_name || "",
       created_at: meta.created_at || "",
