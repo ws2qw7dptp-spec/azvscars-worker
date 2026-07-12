@@ -150,12 +150,97 @@ def ingest_to_pages(sid, meta, files):
 
 # ─── Generate Action ─────────────────────────────────────────────────────────
 
+def action_cinematic_generate(sid, mark_done=True):
+    from ai_comparison import generate_comparison
+    from image_fetcher import fetch_wikipedia_image
+    from video_sound_fetcher import choose_reel_type, cinematic_script, download_cinematic_assets
+    import cinematic_reel_renderer
+
+    set_status(sid, "running", "🎬 Cinematic reel üçün mövzu hazırlanır…")
+    data = generate_comparison(post_type="night")
+    reel_type = choose_reel_type(sid)
+    script = cinematic_script(reel_type, data["car1_name"], data["car2_name"])
+    use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        img1_path = fetch_wikipedia_image(data["car1_search_query"], os.path.join(tmp, "car1_orig.jpg"))
+        img2_path = fetch_wikipedia_image(data["car2_search_query"], os.path.join(tmp, "car2_orig.jpg"))
+
+        set_status(sid, "running", "🎨 Brend slaydlar hazırlanır…")
+        flip1, flip2 = False, True
+        slide_paths = render_local_slides(data, img1_path, img2_path, flip1, flip2, tmp)
+        slide_urls = {
+            filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
+            for filename in SLIDE_KEYS
+        }
+
+        set_status(sid, "running", "🏎 Video və real səs effektləri axtarılır…")
+        media = download_cinematic_assets(reel_type, os.path.join(tmp, "cinematic_assets"))
+        if not media["videos"]:
+            raise RuntimeError(f"Cinematic video tapılmadı. Fallback lazımdır. Errors: {media.get('errors')}")
+
+        set_status(sid, "running", "🎞 Cinematic reel render edilir…")
+        local_reel = os.path.join(tmp, "reel.mp4")
+        fallback_slides = [slide_paths[k] for k in SLIDE_KEYS[:-1]]
+        cinematic_reel_renderer.render_cinematic_reel(
+            media["videos"],
+            fallback_slides,
+            slide_paths["slide5_outro.png"],
+            local_reel,
+            script,
+            sfx_paths=media["sfx"],
+        )
+        reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
+
+        caption = script["caption"] + "\n\n" + data.get("hashtags", "")
+        meta = {
+            "sid": sid,
+            "post_type": "cinematic",
+            "cinematic_type": reel_type,
+            "car1_name": data["car1_name"],
+            "car2_name": data["car2_name"],
+            "flip1": flip1,
+            "flip2": flip2,
+            "caption": caption,
+            "data": {**data, "cinematic_script": script, "cinematic_media_errors": media.get("errors", [])},
+            "slide_urls": slide_urls,
+            "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
+            "created_at": time.strftime("%Y-%m-%d %H:%M"),
+            "is_published": False,
+        }
+
+        if use_pages_ingest:
+            files = {
+                "car1_orig.jpg": _file_payload(img1_path, "image/jpeg"),
+                "car2_orig.jpg": _file_payload(img2_path, "image/jpeg"),
+                "reel.mp4": _file_payload(local_reel, "video/mp4"),
+            }
+            for filename in SLIDE_KEYS:
+                files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
+            set_status(sid, "running", "☁️ Cinematic media Cloudflare Pages-ə göndərilir…")
+            ingest_to_pages(sid, meta, files)
+        else:
+            cf.session_save(sid, meta)
+
+    if mark_done:
+        set_status(sid, "done", "✅ Cinematic reel hazırdır!")
+    print(f"[cinematic] Done. sid={sid} type={reel_type}")
+
 def action_generate(sid, post_type, make_reel, mark_done=True):
     from ai_comparison import generate_comparison
     from image_fetcher   import fetch_wikipedia_image
     import reel_renderer
 
     try:
+        if post_type == "cinematic":
+            try:
+                return action_cinematic_generate(sid, mark_done=mark_done)
+            except Exception as cinematic_error:
+                print(f"[cinematic] fallback to night VS reel: {cinematic_error}")
+                set_status(sid, "running", "⚠️ Cinematic media tapılmadı, gecə VS reel fallback işə düşdü…")
+                post_type = "night"
+                make_reel = True
+
         set_status(sid, "running", "☁️ AI ilə müqayisə yaradılır…")
         data = generate_comparison(post_type=post_type)
 

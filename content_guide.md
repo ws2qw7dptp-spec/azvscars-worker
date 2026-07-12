@@ -1,103 +1,187 @@
-# AZvsCars — Complete Content System
+# AZvsCars Brand System
 
-Avtomobil sahiblərini tərəf seçməyə çağıran Azərbaycan dilli Instagram sistemi: gündə dörd avtomatik post, mübahisəli müqayisələr, təmiz vizual stil və şərh gətirən caption-lar.
+AZvsCars is Azerbaijan's car battle arena: every post makes car owners choose a side.
+
+Core line:
+
+**Masin secimi deyil, teref secimi.**
+
+The page should feel like a premium automotive debate media brand, not a random car meme page. The tone is sharp, local, confident, and sponsor-friendly.
 
 ---
 
-## 1. The 5 Content Pillars
+## 1. Account Theme
 
-Rotate through these. Never post randomly — every post should belong to one of these five buckets, so followers know what they're getting and keep coming back.
+**Positioning:** Azerbaijan's daily car debate page.
 
-| # | Pillar | What it is | Why people follow for it |
-|---|--------|-----------|---------------------------|
-| 1 | **Market Pulse** | "This week in the AZ car market" — price moves, which brand is rising/falling, import trends | Feels like insider knowledge, keeps people checking back |
-| 2 | **Budget Breakdown** | "What $X gets you" — comparing 3-4 real cars at a price point | Directly useful to anyone car-shopping, highly saveable |
-| 3 | **Spec Showdown** | Head-to-head: 2 models compared on price/engine/fuel/features | Sparks comments and arguments = engagement |
-| 4 | **Buyer Survival Tips** | Import scams to avoid, inspection checklist, real cost of ownership (insurance/fuel/service) | Builds trust — you're protecting people, not just showing cars |
-| 5 | **Culture/Reaction** | Trending car spotted in Baku, funny/relatable driving moments, local car culture | Pure engagement/reach driver, humanizes the page |
+**Promise:** every day, followers get clear car battles that help them argue, compare, save, and choose.
 
-**Cari autopilot ritmi:** hər gün 4 post, Bakı vaxtı ilə:
+**Audience:** car owners, future buyers, enthusiasts, German-car fans, Chinese EV skeptics/supporters, Toyota/Lexus reliability people, AMG/M/RS fans, and Baku drivers who care about status and ownership cost.
 
-| Saat | Format | Məqsəd |
+**Voice:**
+- Azerbaijani only.
+- Short, direct, confident.
+- Local when useful: Baku traffic, fuel, service, resale, status.
+- Debate-driven without sounding cheap or fake.
+
+Avoid:
+- English titles like "MUSCLE WAR".
+- Random pairings with no owner tribe.
+- Overclaiming facts.
+- Captions that sound translated.
+
+---
+
+## 2. Visual Identity
+
+**Palette:** black, red, white.
+
+**Feel:** dark arena, premium tension, clean data.
+
+**Rules:**
+- Small consistent `@azvscars` mark.
+- Big hook text in the first visual.
+- No crowded paragraphs inside visuals.
+- Car images must stay inspectable; do not hide the car under too much blur.
+- Every post should be recognizable from the grid.
+
+**Primary visual language:**
+- Split-screen VS layout.
+- Red center divider.
+- Strong top badge.
+- Bottom decision CTA.
+
+---
+
+## 3. Content Pillars
+
+| Pillar | Meaning | Example |
 |---|---|---|
-| 09:00 | Sürücü Seçimi | Sürətli “hansını sürərdin?” mübahisəsi |
-| 13:00 | Real Avto Döyüş | Əsas karusel müqayisəsi |
-| 19:30 | Şərh Savaşı | Ən güclü tərəf seçdirən duel |
-| 22:45 | Gecə Döyüşü | Emosional/performance yönümlü reel |
+| Çin vs Alman | New Chinese tech challenges German prestige | BYD Seal vs C-Class |
+| EV vs Benzin | Instant torque vs engine character | Tesla Model 3 Performance vs BMW M3 |
+| Status vs Etibar | Image vs long-term confidence | G-Class vs Land Cruiser |
+| Baki Realligi | Service, fuel, resale, daily usability | Range Rover vs Lexus LX |
+| Surucu Terefi | Emotional choice, fast comments | AMG vs M, RS vs M |
+
+Every generated post should map to one of these themes through `theme_type`.
 
 ---
 
-## 2. Exact Post Formats
+## 4. Daily Rhythm
 
-### A. Carousel (main automated format)
-- **Slide 1 (cover):** Two cars, one clear debate. The hook must make owners choose a side.
-- **Slides 2-4:** Engine/power, 0-100 km/s, starting price.
-- **Last slide:** Brand CTA with the current 4-post daily schedule: 09:00 / 13:00 / 19:30 / 22:45 Baku time.
+| Baku time | Format | Goal |
+|---|---|---|
+| 09:00 | Surucu secimi | quick comments |
+| 13:00 | Real avto doyus | saveable comparison |
+| 19:30 | Serh savasi | controversial debate |
+| 22:45 | Cinematic Reel | video motion, real sound, watch time |
 
-### B. Controversial Matchups
-Prioritize “owner tribes” rather than neutral spec-sheet pairs:
-- China premium EV vs Mercedes/BMW
-- Tesla tech vs German luxury
-- Toyota/Lexus reliability vs German/Range Rover status
-- Old V8 vs new hybrid
-- American muscle vs European precision
-- Korean value vs Japanese reliability
-
-### C. Reels
-- **Hook (0-2 sec):** Text on screen + spoken hook, no slow intro. Example: *"Bu maşın 3 ayda 40% ucuzlaşdı."*
-- **Body (3-20 sec):** AI voiceover over a sequence of manufacturer photos/B-roll with Ken Burns (slow zoom) motion, synced text captions burned in (most people watch muted).
-- **Close (last 2 sec):** One-line takeaway + "Follow" text overlay.
-- Use trending audio at low volume under your voiceover when the format allows — this significantly helps reach.
+Stories:
+- 08:45: daily schedule and brand reminder
+- 14:30: controversy teaser
+- 20:45: comment CTA
+- Monday, Wednesday, Friday: contact/sponsor story
 
 ---
 
-## 3. Quality Standards (non-negotiable — this is what makes it look like a real brand, not a spam page)
+## 5. Carousel Structure
 
-**Visual identity — build once, reuse forever:**
-- 1 logo/watermark, small, same corner, every single post
-- 2 brand colors max (e.g., a dark charcoal + one accent color) + white/black text
-- 2 fonts max: one bold display font for headlines, one clean font for data/body text
-- Same template grid every time — same margins, same logo position, same layout skeleton. Recognizability is what makes someone stop scrolling and think "oh, this page again" — that's the follow trigger.
+Slide 1: hook and car names.
 
-**Data integrity:**
-- Never invent a number. Pull from real listings, manufacturer spec sheets, or published market reports, and keep a running note of where each figure came from.
-- If you're not sure a number is right, don't post it — a wrong price/spec destroys trust in this niche fast, and trust is the entire product.
+Slide 2: engine / power.
 
-**Caption formula (every post):**
-1. Hook line (repeats or sharpens the cover headline)
-2. 2-3 sentences of real value/context
-3. One question to drive comments
-4. 5-8 hashtags: mix broad (#Azerbaijan #avtomobil) + specific (#avtobazar #maşınelanları)
+Slide 3: 0-100 km/h.
 
----
+Slide 4: Baki realligi or price angle.
 
-## 4. Daily Autopilot Rhythm
+Slide 5: verdict, schedule, and comment CTA.
 
-GitHub Actions runs the posting pipeline automatically.
-
-- 09:00 Bakı — Sürücü Seçimi
-- 13:00 Bakı — Real Avto Döyüş
-- 19:30 Bakı — Şərh Savaşı
-- 22:45 Bakı — Gecə Döyüşü
-
-Manual triggering from the dashboard should use the same four formats. The post generator should not advertise old times or older weekly rhythm.
+Slide 5 must answer:
+- Who is the emotional choice?
+- Who is the smarter daily choice?
+- What should the viewer comment?
 
 ---
 
-## 5. What's Safe to Automate vs. What Needs a Human Touch
+## 6. Reels Structure
 
-| Task | Automate? |
-|---|---|
-| Writing captions/scripts from data you provide | Yes — AI does this well |
-| Generating the data-card/carousel graphics | Yes — script below does this |
-| Voiceover for reels | Yes — AI voice tools |
-| Scheduling/posting | Yes — GitHub Actions + Cloudflare Pages |
-| Sourcing accurate car data/prices | **No** — pull from real public listings/manufacturer sites yourself, don't let AI invent numbers |
-| Final read-through before posting | **No** — always eyeball each post for accuracy before it goes out; a factual mistake in this niche is the fastest way to lose trust |
+Reels should be built for watch time and shares:
+
+0.0-0.5s: instant hook.
+
+0.5-2s: "Bu secim Baki-da dava salar" style statement.
+
+2-8s: car 1 advantage.
+
+8-14s: car 2 response.
+
+14-18s: final choice CTA.
+
+Requirements:
+- 9:16 vertical output.
+- Motion on every slide: slow zoom, small punch on transitions.
+- Strong on-screen hook.
+- Captions/text large enough to read on mobile.
+- Music from the local soundtrack rotation.
+- Engine/rev/acceleration SFX should be added when available.
+- If cinematic media cannot be fetched, the system must fall back to the normal branded VS reel.
+
+Content mix:
+- 70% classic VS formats.
+- 15% emotional formats: Sound Battle, Night POV, Interior Battle, Satisfaction Reel.
+- 15% educational formats: Hidden Features, Owner Experience, History, Expensive Mistakes, Surprising Facts.
+
+Supported cinematic reel types:
+- Sound Battle
+- Night POV
+- Hidden Features
+- Owner Experience
+- POV Decision
+- Guess The Car
+- Supercar Facts
+- Expensive Mistakes
+- Which Would You Buy
+- Engine Sound Quiz
+- Drag Race Result
+- Interior Battle
+- Exterior Details
+- POV Buying
+- What Would You Change
+- Satisfaction Reel
+- History
+- Surprising Fact
+- Dream Garage
+- Fail vs Win
+- Real Verdict
 
 ---
 
-## 6. Growth Mechanics Specific to This Niche
-- **Saves > likes** for the algorithm — Budget Breakdown and Spec Showdown posts get saved because people reference them later when actually shopping. Lean into these formats.
-- **Comments-bait works honestly here** — "Which one would you buy?" under a Spec Showdown genuinely drives replies without feeling forced.
-- **Repost-ability** — people share Budget Breakdown posts to friends who are car shopping. Make slide 1 work even as a screenshot shared out of context.
+## 7. Caption Formula
+
+Use this pattern:
+
+```text
+Bu secim masin adamlarini iki yere bolur.
+
+[Car 1] [one clear strength], [Car 2] ise [one clear strength] ile cavab verir.
+Baki-da gundelik surus ucun biri daha mentiqli gorune biler, amma urek basqa sey deye biler.
+
+Sen hansini secersen: sol yoxsa sag?
+```
+
+Hashtags: 5-8 only. Mix local and broad:
+
+`#azvscars #azerbaijan #baku #avto #masin #avtomobil #avtobazar`
+
+---
+
+## 8. Quality Bar
+
+Good AZvsCars content must be:
+- Commentable: clear sides.
+- Saveable: useful stats or ownership angle.
+- Shareable: "send this to your BMW/Mercedes friend" energy.
+- Sponsor-friendly: clean design, consistent tone, no sloppy language.
+- Local: Azerbaijan/Baku context where it matters.
+
+If a post does not make someone pick a side, it is not AZvsCars.

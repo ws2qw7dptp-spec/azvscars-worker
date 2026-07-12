@@ -483,9 +483,9 @@ body {
         <div class="track-name">Şərh Savaşı</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
-      <div class="track-item" id="track-night">
+      <div class="track-item" id="track-cinematic">
         <div class="track-time">🌙 22:45</div>
-        <div class="track-name">Gecə Döyüşü</div>
+        <div class="track-name">Cinematic Reel</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
     </div>
@@ -504,7 +504,8 @@ body {
         <option value="main">🔥 13:00 — Real Avto Döyüş</option>
         <option value="quick">⚡ 09:00 — Sürücü Seçimi</option>
         <option value="war">💬 19:30 — Şərh Savaşı</option>
-        <option value="night">🌙 22:45 — Gecə Döyüşü</option>
+        <option value="night">🌙 Manual — Gecə Döyüşü</option>
+        <option value="cinematic">🏎 22:45 — Cinematic Reel</option>
       </select>
 
       <label class="reel-toggle">
@@ -840,10 +841,10 @@ function updateTracker(items) {
   
   // In the real system, you'd save post_type in index. 
   // For now, let's just count how many are published today.
-  // quick=1, main=2, war=3, night=4
+  // quick=1, main=2, war=3, cinematic=4
   const count = publishedToday.length;
   
-  const types = ['quick', 'main', 'war', 'night'];
+  const types = ['quick', 'main', 'war', 'cinematic'];
   let allDone = true;
   
   types.forEach((type, index) => {
@@ -877,7 +878,7 @@ async function startAutopilot() {
   btn.textContent = '🚀 Autopilot İşləyir...';
   
   // Find first missing post
-  const types = ['quick', 'main', 'war', 'night'];
+  const types = ['quick', 'main', 'war', 'cinematic'];
   let missingType = null;
   
   for (const type of types) {

@@ -23,6 +23,7 @@ on:
           - main
           - war
           - night
+          - cinematic
 
 jobs:
   post-to-instagram:
@@ -32,6 +33,9 @@ jobs:
       ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
       PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
       INGEST_VIA_PAGES: "true"
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
 
     steps:
       - name: Checkout Code
@@ -56,7 +60,7 @@ jobs:
             elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
               echo "POST_TYPE=war" >> "$GITHUB_ENV"
             elif [[ "${{ github.event.schedule }}" == "45 18 * * *" ]]; then
-              echo "POST_TYPE=night" >> "$GITHUB_ENV"
+              echo "POST_TYPE=cinematic" >> "$GITHUB_ENV"
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
             fi
@@ -71,7 +75,7 @@ jobs:
         run: |
           SID="auto$(date +%Y%m%d%H%M%S)"
           MAKE_REEL="false"
-          if [[ "$POST_TYPE" == "quick" || "$POST_TYPE" == "war" || "$POST_TYPE" == "night" ]]; then
+          if [[ "$POST_TYPE" == "quick" || "$POST_TYPE" == "war" || "$POST_TYPE" == "night" || "$POST_TYPE" == "cinematic" ]]; then
             MAKE_REEL="true"
           fi
           python worker.py \

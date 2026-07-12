@@ -17,13 +17,14 @@ name: AZvsCars Worker
         type: string
         required: true
       post_type:
-        description: "Post type (main, quick, war, night)"
+        description: "Post type (main, quick, war, night, cinematic)"
         type: choice
         options:
           - main
           - quick
           - war
           - night
+          - cinematic
         required: false
         default: "main"
       make_reel:
@@ -75,6 +76,9 @@ jobs:
       INGEST_VIA_PAGES: "true"
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
 
     steps:
       - name: Checkout

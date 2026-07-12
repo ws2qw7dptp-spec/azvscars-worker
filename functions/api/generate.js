@@ -6,7 +6,7 @@
 export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => ({}));
   const post_type = body.post_type || "main";
-  const make_reel = body.make_reel ? "true" : "false";
+  const make_reel = post_type === "cinematic" || body.make_reel ? "true" : "false";
   const auto_publish = body.auto_publish ? "true" : "false";
 
   // Generate a unique session ID
