@@ -200,6 +200,9 @@ function polishComparison(value, postType) {
   clean.slide2_car1_stat = normalizePowerStat(clean.car1_name, clean.slide2_car1_stat);
   clean.slide2_car2_stat = normalizePowerStat(clean.car2_name, clean.slide2_car2_stat);
   clean.battle_title = battleTitleFor(clean, postType);
+  clean.content_pillar = postType === "cinematic" ? "emosional_video" : "mübahisəli_müqayisə";
+  clean.audience_trigger = postType === "war" ? "şərh_savaşı" : "tərəf_seçimi";
+  clean.editorial_angle = postType;
 
   const a = clean.car1_name || "birinci avtomobil";
   const b = clean.car2_name || "ikinci avtomobil";
