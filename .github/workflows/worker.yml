@@ -1,5 +1,9 @@
 name: AZvsCars Worker
 
+concurrency:
+  group: azvscars-instagram-publish
+  cancel-in-progress: false
+
 "on":
   workflow_dispatch:
     inputs:
