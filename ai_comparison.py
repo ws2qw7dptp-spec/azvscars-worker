@@ -437,6 +437,9 @@ def curated_comparison(post_type="main") -> dict:
         "slide3_title": "0-100 KM/S",
         "slide4_title": "BAŞLANĞIC QİYMƏTİ",
         "hashtags": "#azvscars #azerbaijan #avto #baku #masin #avtomobil #masinlar",
+        "content_pillar": "mübahisəli_müqayisə",
+        "audience_trigger": "tərəf_seçimi",
+        "editorial_angle": post_type,
     })
     return item
 
