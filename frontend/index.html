@@ -805,6 +805,41 @@ async function deletePost() {
 
 // ── History & Tracking ────────────────────────────────────────────────────────
 let todayHistory = [];
+const DAILY_POST_PLAN = [
+  { type: 'quick', label: '09:00 Tez Seçim' },
+  { type: 'main', label: '13:00 Əsas Duel' },
+  { type: 'war', label: '19:30 Şərh Savaşı' },
+  { type: 'cinematic', label: '22:45 Cinematic Reel' },
+];
+const POST_TYPE_LABELS = {
+  quick: 'TEZ SEÇİM',
+  main: 'VS MÜQAYİSƏ',
+  war: 'ŞƏRH SAVAŞI',
+  night: 'GECƏ DÖYÜŞÜ',
+  cinematic: 'CINEMATIC REEL',
+  stories: 'STORY',
+};
+
+function bakuDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Baku',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function sessionDateKey(session) {
+  return String(session.created_at || '').slice(0, 10);
+}
+
+function isSessionPublished(session) {
+  return Boolean(session.is_published || session.published?.reel || session.published?.carousel || session.published?.stories);
+}
 
 async function loadHistory() {
   try {
@@ -822,10 +857,10 @@ async function loadHistory() {
     }
     grid.innerHTML = items.map(s => `
       <div class="history-card" onclick="loadSession('${s.sid}')">
-        <div class="history-vs">VS MÜQAYİSƏ</div>
+        <div class="history-vs">${POST_TYPE_LABELS[s.post_type] || 'VS MÜQAYİSƏ'}</div>
         <div class="history-names">${s.car1 || '?'}<br>${s.car2 || '?'}</div>
         <div class="history-date">${s.created_at || ''}</div>
-        ${s.is_published
+        ${isSessionPublished(s)
           ? `<div class="history-status status-pub">✅ Paylaşılıb</div>`
           : `<div class="history-status status-pend">⏳ Gözləyir</div>`}
       </div>`).join('');
@@ -833,26 +868,19 @@ async function loadHistory() {
 }
 
 function updateTracker(items) {
-  // Get today's date in YYYY-MM-DD
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Find published posts for today
-  const publishedToday = items.filter(s => s.created_at.startsWith(today) && s.is_published);
-  
-  // In the real system, you'd save post_type in index. 
-  // For now, let's just count how many are published today.
-  // quick=1, main=2, war=3, cinematic=4
-  const count = publishedToday.length;
-  
-  const types = ['quick', 'main', 'war', 'cinematic'];
+  const today = bakuDateKey();
+  const publishedToday = items.filter(s => sessionDateKey(s) === today && isSessionPublished(s));
   let allDone = true;
   
-  types.forEach((type, index) => {
+  DAILY_POST_PLAN.forEach(({ type }) => {
     const el = document.getElementById(`track-${type}`);
+    if (!el) return;
     const statusEl = el.querySelector('.track-status');
+    const published = publishedToday.find(s => s.post_type === type);
     
-    if (index < count) {
-      statusEl.textContent = '✅ Paylaşılıb';
+    if (published) {
+      const time = String(published.created_at || '').slice(11, 16);
+      statusEl.textContent = time ? `✅ ${time}` : '✅ Paylaşılıb';
       statusEl.className = 'track-status done';
     } else {
       statusEl.textContent = '⏳ Gözləyir';
@@ -878,10 +906,9 @@ async function startAutopilot() {
   btn.textContent = '🚀 Autopilot İşləyir...';
   
   // Find first missing post
-  const types = ['quick', 'main', 'war', 'cinematic'];
   let missingType = null;
   
-  for (const type of types) {
+  for (const { type } of DAILY_POST_PLAN) {
     const el = document.getElementById(`track-${type}`);
     if (el.querySelector('.track-status').classList.contains('wait')) {
       missingType = type;
@@ -894,7 +921,8 @@ async function startAutopilot() {
     return;
   }
   
-  showStatus(`🤖 Autopilot: ${missingType} postu yaradılır və paylaşılır...`, true);
+  const planItem = DAILY_POST_PLAN.find(item => item.type === missingType);
+  showStatus(`🤖 Autopilot: ${(planItem?.label || missingType)} yaradılır və paylaşılır...`, true);
   
   try {
     const res = await apiFetch('/api/generate', {

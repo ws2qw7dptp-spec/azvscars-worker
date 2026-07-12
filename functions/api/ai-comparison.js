@@ -64,6 +64,9 @@ function instructionFor(postType) {
   if (postType === "night") {
     return "POST TYPE: Dark Night Battle. Pick aggressive cars with fanbases: AMG vs M, RS vs M, Mustang vs M4, old V8 AMG vs new hybrid AMG, GT-R vs 911 Turbo, or Hellcat vs European performance.";
   }
+  if (postType === "cinematic") {
+    return "POST TYPE: Cinematic Reel. Pick a car topic that works with motion, sound, and fast curiosity: engine sound quiz, night POV, hidden features, drag race result, interior battle, expensive mistakes, or surprising fact. Keep it Azerbaijani and debate-driven.";
+  }
   return "POST TYPE: Real VS Battle. Pick a debate-driven matchup with owner loyalty. Prioritize China vs Germany, EV vs petrol, reliability vs prestige, value vs badge, old-school engine vs new technology.";
 }
 
@@ -124,6 +127,7 @@ function battleTitleFor(value, postType) {
   if (includesAny(text, muscle)) return "MUSCLE DÖYÜŞ";
   if (/v8/i.test(`${value.slide2_car1_stat || ""} ${value.slide2_car2_stat || ""}`) && /hybrid|elektrik|erev/i.test(`${value.slide2_car1_stat || ""} ${value.slide2_car2_stat || ""}`)) return "V8 VS HİBRİD";
   if (postType === "night") return "GECƏ DÖYÜŞÜ";
+  if (postType === "cinematic") return "SƏS DÖYÜŞÜ";
   if (postType === "war") return "ŞƏRH SAVAŞI";
   if (postType === "quick") return "SÜRÜCÜ SEÇİMİ";
   return "AVTO DÖYÜŞÜ";
@@ -205,6 +209,8 @@ function polishComparison(value, postType) {
     clean.caption = `Bu duel avtomobil sahiblərini iki yerə böləcək: ${a} yoxsa ${b}? Biri ağılla, biri imiclə qalib gəlir deyənlər olacaq. Sol yoxsa sağ? Cavabı şərhə yaz və bizi izlə.`;
   } else if (postType === "night") {
     clean.caption = `Gecə Bakıda hansının açarını götürərdin: ${a} yoxsa ${b}? Səs, görüntü və xarakter baxımından bu seçim fanatları böləcək. Cavabı şərhə yaz, sabah yeni duel gəlir.`;
+  } else if (postType === "cinematic") {
+    clean.caption = `Səsə, görüntüyə və xarakterə görə seçim et: ${a} yoxsa ${b}? Burada rəqəmdən çox hiss danışır. Sənin tərəfin hansıdır?`;
   } else {
     clean.caption = `${a} və ${b} eyni səhnədə olsa, mübahisə başlayır. Səncə burada daha vacib olan nədir: marka, texnologiya, etibarlılıq, yoxsa sürüş hissi? Belə müqayisələr üçün bizi izlə.`;
   }
@@ -226,7 +232,7 @@ export async function onRequestPost({ request, env }) {
     body = {};
   }
 
-  const postType = ["quick", "main", "war", "night"].includes(body.post_type) ? body.post_type : "main";
+  const postType = ["quick", "main", "war", "night", "cinematic"].includes(body.post_type) ? body.post_type : "main";
   const recent = await recentPairs(env);
   const recentCarList = await recentCars(env);
   const seed = `${Date.now()}-${crypto.randomUUID()}`;
