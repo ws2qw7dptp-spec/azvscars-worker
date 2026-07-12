@@ -46,6 +46,16 @@ export async function onRequestPost({ request, env, params }) {
   const body = await request.json().catch(() => ({}));
   const caption = body.caption || meta.caption || "";
   const media_type = body.media_type || "carousel";
+  const publishKey = media_type === "story" ? `story:${body.story_file || "story1_brand.jpg"}` : media_type;
+
+  if (meta.published?.[publishKey]) {
+    return new Response(JSON.stringify({
+      ok: true,
+      already_published: true,
+      post_id: meta.published[publishKey].post_id,
+      message: "Bu media artıq paylaşılıb. Təkrar paylaşım dayandırıldı.",
+    }), { headers: { "Content-Type": "application/json" } });
+  }
 
   const ig_token = env.META_ACCESS_TOKEN;
   const ig_user_id = env.INSTAGRAM_ACCOUNT_ID;
@@ -187,7 +197,7 @@ export async function onRequestPost({ request, env, params }) {
     // Mark this media type as published in KV.
     meta.caption = caption;
     meta.published = meta.published || {};
-    meta.published[media_type] = {
+    meta.published[publishKey] = {
       post_id,
       published_at: new Date().toISOString(),
     };
@@ -199,7 +209,9 @@ export async function onRequestPost({ request, env, params }) {
     if (index && Array.isArray(index)) {
       const idx = index.findIndex(s => s.sid === sid);
       if (idx !== -1) {
-        index[idx].is_published = true;
+        index[idx].is_published = Boolean(meta.is_published || media_type === "story");
+        index[idx].published = meta.published;
+        index[idx].story_slot = meta.story_slot || index[idx].story_slot || "";
         await kv.put("sessions:index", JSON.stringify(index));
       }
     }
