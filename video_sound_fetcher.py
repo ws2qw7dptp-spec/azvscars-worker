@@ -309,7 +309,7 @@ def _download_freesound_sfx(output_dir, limit):
             "https://freesound.org/apiv2/search/",
             params={
                 "query": query,
-                "filter": "duration:[1 TO 15]",
+                "filter": 'duration:[1 TO 15] license:"Creative Commons 0"',
                 "sort": "rating_desc",
                 "page_size": 5,
                 "fields": "id,name,previews,license,duration,username,url",
