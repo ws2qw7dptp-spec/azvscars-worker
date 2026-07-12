@@ -56,6 +56,16 @@ name: AZvsCars Worker
         type: string
         required: false
         default: ""
+      story_slot:
+        description: "Story slot (morning, noon, evening, all)"
+        type: choice
+        options:
+          - morning
+          - noon
+          - evening
+          - all
+        required: false
+        default: "all"
 
 jobs:
   run-worker:
@@ -104,4 +114,5 @@ jobs:
             --make_reel "${{ github.event.inputs.make_reel }}" \
             --car "${{ github.event.inputs.car }}" \
             --auto_publish "${{ github.event.inputs.auto_publish }}" \
-            --story_files "${{ github.event.inputs.story_files }}"
+            --story_files "${{ github.event.inputs.story_files }}" \
+            --story_slot "${{ github.event.inputs.story_slot }}"
