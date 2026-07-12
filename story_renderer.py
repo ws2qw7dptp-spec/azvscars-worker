@@ -150,7 +150,40 @@ def story_suv_war(path):
     img.save(path, quality=94)
 
 
-def render_story_campaign(output_dir, email="islammuradov1@icloud.com"):
+def _fit_centered(draw, text, y, max_width=900, start_size=78, fill=WHITE):
+    size = start_size
+    while size > 34:
+        f = font(size)
+        if draw.textbbox((0, 0), text, font=f)[2] <= max_width:
+            break
+        size -= 2
+    draw.text((W // 2, y), text, font=font(size), fill=fill, anchor="mm")
+
+
+def story_daily_duel(path, data):
+    img, draw = base_card()
+    rect_text(draw, "BUGÜNÜN DUELİ", 610, 88)
+    _fit_centered(draw, data.get("car1_name", "SOL TƏRƏF"), 820, fill=WHITE)
+    centered(draw, "VS", 965, 82, RED)
+    _fit_centered(draw, data.get("car2_name", "SAĞ TƏRƏF"), 1110, fill=WHITE)
+    centered(draw, "POSTA BAX, TƏRƏFİNİ SEÇ", 1320, 54, MUTED)
+    footer(draw)
+    img.save(path, quality=94)
+
+
+def story_daily_question(path, data):
+    img, draw = base_card()
+    rect_text(draw, "SƏN QƏRAR VER", 610, 88)
+    centered(draw, data.get("battle_title", "AVTO DÖYÜŞÜ"), 810, 86, RED)
+    centered(draw, "MARKA?", 990, 82, WHITE)
+    centered(draw, "TEXNOLOGİYA?", 1100, 82, WHITE)
+    centered(draw, "SÜRÜŞ HİSSİ?", 1210, 82, WHITE)
+    centered(draw, "CAVABI ŞƏRHƏ YAZ", 1390, 58, MUTED)
+    footer(draw)
+    img.save(path, quality=94)
+
+
+def render_story_campaign(output_dir, email="islammuradov1@icloud.com", daily_data=None):
     os.makedirs(output_dir, exist_ok=True)
     stories = {
         "story1_brand.jpg": story_brand,
@@ -162,6 +195,9 @@ def render_story_campaign(output_dir, email="islammuradov1@icloud.com"):
         "story7_ev_v8.jpg": story_ev_v8,
         "story8_suv_war.jpg": story_suv_war,
     }
+    if daily_data:
+        stories["story9_daily_duel.jpg"] = lambda p: story_daily_duel(p, daily_data)
+        stories["story10_daily_question.jpg"] = lambda p: story_daily_question(p, daily_data)
     paths = {}
     for name, builder in stories.items():
         path = os.path.join(output_dir, name)
