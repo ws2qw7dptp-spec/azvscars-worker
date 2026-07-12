@@ -57,9 +57,9 @@ jobs:
           fi
 
           if [[ "$SLOT" == "morning" ]]; then
-            STORY_FILES="story1_brand.jpg,story2_schedule.jpg"
+            STORY_FILES="story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg"
           elif [[ "$SLOT" == "noon" ]]; then
-            STORY_FILES="story3_topics.jpg,story6_china_germany.jpg,story7_ev_v8.jpg"
+            STORY_FILES="story10_daily_question.jpg,story6_china_germany.jpg,story7_ev_v8.jpg"
           elif [[ "$SLOT" == "evening" ]]; then
             STORY_FILES="story5_comment.jpg,story8_suv_war.jpg"
             # Sponsorluq/əlaqə story-si həftədə 3 dəfə: bazar ertəsi, çərşənbə, cümə.
@@ -86,4 +86,5 @@ jobs:
             --action stories \
             --sid "$SID" \
             --auto_publish true \
-            --story_files "$STORY_FILES"
+            --story_files "$STORY_FILES" \
+            --story_slot "$STORY_SLOT"
