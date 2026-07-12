@@ -498,7 +498,7 @@ body {
   <!-- Schedule Tracker -->
   <div class="tracker-card" id="scheduleTracker">
     <div class="tracker-hdr">
-      <div class="tracker-title">📅 Bugünkü Plan — Gündə 4 Post</div>
+      <div class="tracker-title">📅 Bugünkü Plan — 4 Feed + 3 Story Run</div>
       <button class="btn-autopilot" id="autopilotBtn" onclick="startAutopilot()">
         🚀 Autopilot Başlat
       </button>
@@ -524,6 +524,21 @@ body {
         <div class="track-name">Cinematic Reel</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
+      <div class="track-item" id="track-story-morning">
+        <div class="track-time">📲 08:45</div>
+        <div class="track-name">Səhər Story-ləri</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-story-noon">
+        <div class="track-time">📲 14:30</div>
+        <div class="track-name">Günorta Story-ləri</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-story-evening">
+        <div class="track-time">📲 20:45</div>
+        <div class="track-name">Axşam Story-ləri</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
     </div>
   </div>
 
@@ -545,8 +560,8 @@ body {
     </div>
     <div class="system-card">
       <div class="system-kicker">R2 Storage</div>
-      <div class="system-value">~45-70 MB / gün</div>
-      <div class="system-note">8.5 GB-də avto təmizləmə</div>
+      <div class="system-value" id="storageValue">Hesablanır…</div>
+      <div class="system-note" id="storageNote">8.5 GB-də avto təmizləmə</div>
     </div>
   </div>
 
@@ -870,6 +885,12 @@ const DAILY_POST_PLAN = [
   { type: 'war', label: '19:30 Şərh Savaşı' },
   { type: 'cinematic', label: '22:45 Cinematic Reel' },
 ];
+const DAILY_STORY_PLAN = [
+  { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
+  { type: 'story-noon', postType: 'stories', storySlot: 'noon', label: '14:30 Günorta Story-ləri', files: 'story10_daily_question.jpg,story6_china_germany.jpg,story7_ev_v8.jpg' },
+  { type: 'story-evening', postType: 'stories', storySlot: 'evening', label: '20:45 Axşam Story-ləri', files: 'story5_comment.jpg,story8_suv_war.jpg' },
+];
+const DAILY_PLAN = [...DAILY_POST_PLAN, ...DAILY_STORY_PLAN];
 const POST_TYPE_LABELS = {
   quick: 'TEZ SEÇİM',
   main: 'VS MÜQAYİSƏ',
@@ -897,7 +918,7 @@ function sessionDateKey(session) {
 }
 
 function isSessionPublished(session) {
-  return Boolean(session.is_published || session.published?.reel || session.published?.carousel || session.published?.stories);
+  return Boolean(session.is_published || Object.keys(session.published || {}).length);
 }
 
 async function loadHistory() {
@@ -909,6 +930,7 @@ async function loadHistory() {
     
     // Update tracker
     updateTracker(items);
+    loadMetrics();
     
     if (!items.length) {
       grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>Hələ heç bir post yaradılmayıb.</div>`;
@@ -931,11 +953,12 @@ function updateTracker(items) {
   const publishedToday = items.filter(s => sessionDateKey(s) === today && isSessionPublished(s));
   let allDone = true;
   
-  DAILY_POST_PLAN.forEach(({ type }) => {
+  DAILY_PLAN.forEach(({ type, postType, storySlot }) => {
     const el = document.getElementById(`track-${type}`);
     if (!el) return;
     const statusEl = el.querySelector('.track-status');
-    const published = publishedToday.find(s => s.post_type === type);
+    const expectedType = postType || type;
+    const published = publishedToday.find(s => s.post_type === expectedType && (!storySlot || s.story_slot === storySlot));
     
     if (published) {
       const time = String(published.created_at || '').slice(11, 16);
@@ -967,7 +990,7 @@ async function startAutopilot() {
   // Find first missing post
   let missingType = null;
   
-  for (const { type } of DAILY_POST_PLAN) {
+  for (const { type } of DAILY_PLAN) {
     const el = document.getElementById(`track-${type}`);
     if (el.querySelector('.track-status').classList.contains('wait')) {
       missingType = type;
@@ -980,14 +1003,20 @@ async function startAutopilot() {
     return;
   }
   
-  const planItem = DAILY_POST_PLAN.find(item => item.type === missingType);
+  const planItem = DAILY_PLAN.find(item => item.type === missingType);
   showStatus(`🤖 Autopilot: ${(planItem?.label || missingType)} yaradılır və paylaşılır...`, true);
   
   try {
     const res = await apiFetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_type: missingType, make_reel: missingType !== 'main', auto_publish: true })
+      body: JSON.stringify({
+        post_type: planItem.postType || missingType,
+        make_reel: !planItem.postType && missingType !== 'main',
+        auto_publish: true,
+        story_slot: planItem.storySlot || 'all',
+        story_files: planItem.files || '',
+      })
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || 'Xəta baş verdi');
@@ -999,6 +1028,16 @@ async function startAutopilot() {
     btn.disabled = false;
     btn.textContent = '🚀 Autopilot Başlat (Yenidən Cəhd Et)';
   }
+}
+
+async function loadMetrics() {
+  try {
+    const res = await apiFetch('/api/metrics');
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('storageValue').textContent = `${data.r2_gb} GB / 10 GB`;
+    document.getElementById('storageNote').textContent = `${data.r2_percent_of_free_10gb}% istifadə • ${data.objects} fayl • 8.5 GB-də təmizləmə`;
+  } catch {}
 }
 
 function pollAutopilotStatus(sid) {
