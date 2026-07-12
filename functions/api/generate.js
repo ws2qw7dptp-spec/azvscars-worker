@@ -6,6 +6,7 @@
 export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => ({}));
   const post_type = body.post_type || "main";
+  const isStories = post_type === "stories";
   const make_reel = post_type === "cinematic" || body.make_reel ? "true" : "false";
   const auto_publish = body.auto_publish ? "true" : "false";
 
@@ -36,9 +37,20 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const triggerRes = await fetch(
-    `https://api.github.com/repos/${ghOwner}/${ghRepo}/actions/workflows/${ghWorkflow}/dispatches`,
-    {
+  const inputs = {
+    action: isStories ? "stories" : "generate",
+    sid,
+    post_type,
+    make_reel,
+    auto_publish,
+  };
+  if (isStories) {
+    inputs.story_slot = body.story_slot || "all";
+    inputs.story_files = body.story_files || "";
+  }
+
+  const dispatchUrl = `https://api.github.com/repos/${ghOwner}/${ghRepo}/actions/workflows/${ghWorkflow}/dispatches`;
+  const dispatchOptions = {
       method: "POST",
       headers: {
         "Authorization": `token ${ghToken}`,
@@ -48,16 +60,18 @@ export async function onRequestPost({ request, env }) {
       },
       body: JSON.stringify({
         ref: ghRef,
-        inputs: {
-          action: "generate",
-          sid: sid,
-          post_type: post_type,
-          make_reel: make_reel,
-          auto_publish: auto_publish
-        }
+        inputs
       })
-    }
-  );
+    };
+  let triggerRes = await fetch(dispatchUrl, dispatchOptions);
+
+  // During rolling deploys the worker workflow may not know story_slot yet.
+  // Retry with the older compatible input shape instead of breaking autopilot.
+  if (!triggerRes.ok && isStories && triggerRes.status === 422) {
+    delete inputs.story_slot;
+    dispatchOptions.body = JSON.stringify({ ref: ghRef, inputs });
+    triggerRes = await fetch(dispatchUrl, dispatchOptions);
+  }
 
   if (!triggerRes.ok) {
     const errText = await triggerRes.text();
