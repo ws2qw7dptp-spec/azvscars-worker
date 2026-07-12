@@ -1,5 +1,9 @@
 name: Instagram Automated Poster
 
+concurrency:
+  group: azvscars-instagram-publish
+  cancel-in-progress: false
+
 on:
   schedule:
     # 09:00 AZT -> 05:00 UTC (Sürücü Seçimi)
