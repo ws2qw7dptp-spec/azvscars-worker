@@ -1,0 +1,43 @@
+name: Cloudflare Storage Cleanup
+
+on:
+  schedule:
+    # 02:20 AZT -> 22:20 UTC. Runs after the daily posting cycle.
+    - cron: "20 22 * * *"
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Check storage without deleting"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  cleanup-r2:
+    runs-on: ubuntu-latest
+
+    env:
+      ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
+      PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
+
+    steps:
+      - name: Run Cloudflare R2 cleanup
+        run: |
+          if [[ -z "$ADMIN_PASS" || -z "$PAGES_BASE_URL" ]]; then
+            echo "ADMIN_PASS and PAGES_BASE_URL secrets are required."
+            exit 1
+          fi
+
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          if [[ -z "$DRY_RUN" ]]; then
+            DRY_RUN="false"
+          fi
+
+          curl --fail-with-body -sS -X POST \
+            "$PAGES_BASE_URL/api/cleanup?threshold_gb=8.5&target_gb=5&min_keep_days=45&dry_run=$DRY_RUN" \
+            -H "X-Admin-Password: $ADMIN_PASS" \
+            -H "Content-Type: application/json"
