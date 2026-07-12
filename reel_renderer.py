@@ -7,7 +7,6 @@ import hashlib
 DEFAULT_AUDIO_FILES = [
     "mercy-line-vs-m5.mp3",
     "chrome-split.mp3",
-    "phonk.mp3",
 ]
 
 def select_audio_file(output_path: str):
