@@ -1,5 +1,9 @@
 name: Instagram Daily Stories
 
+concurrency:
+  group: azvscars-instagram-publish
+  cancel-in-progress: false
+
 on:
   schedule:
     # 08:45 AZT -> 04:45 UTC: brand + daily schedule
