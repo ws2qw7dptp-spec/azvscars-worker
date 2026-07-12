@@ -110,6 +110,37 @@ body {
 .track-status.done { background: var(--green-dim); color: var(--green); }
 .track-status.wait { background: rgba(255,255,255,.05); color: var(--muted); }
 
+.system-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: -12px 0 24px;
+}
+.system-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.system-kicker {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.system-value {
+  font-size: 21px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.system-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 /* ── Main Layout ── */
 .main { max-width: 1360px; margin: 0 auto; padding: 28px 24px 80px; }
 
@@ -431,9 +462,14 @@ body {
 .empty-icon { font-size: 44px; margin-bottom: 14px; opacity: .3; }
 
 /* ── Responsive ── */
-@media (max-width: 1024px) { .slides-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1024px) {
+  .slides-grid { grid-template-columns: repeat(3, 1fr); }
+  .system-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 768px) {
   .gen-card { flex-direction: column; align-items: flex-start; }
+  .tracker-grid { grid-template-columns: repeat(2, 1fr); }
+  .system-grid { grid-template-columns: 1fr; }
   .slides-grid { grid-template-columns: repeat(2, 1fr); }
   .topbar { padding: 0 16px; }
   .main { padding: 20px 16px 60px; }
@@ -488,6 +524,29 @@ body {
         <div class="track-name">Cinematic Reel</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
+    </div>
+  </div>
+
+  <div class="system-grid">
+    <div class="system-card">
+      <div class="system-kicker">Feed</div>
+      <div class="system-value">4 / gün</div>
+      <div class="system-note">09:00, 13:00, 19:30, 22:45</div>
+    </div>
+    <div class="system-card">
+      <div class="system-kicker">Reel</div>
+      <div class="system-value">3 / gün</div>
+      <div class="system-note">Quick, War, Cinematic</div>
+    </div>
+    <div class="system-card">
+      <div class="system-kicker">Story</div>
+      <div class="system-value">3 run / gün</div>
+      <div class="system-note">08:45, 14:30, 20:45</div>
+    </div>
+    <div class="system-card">
+      <div class="system-kicker">R2 Storage</div>
+      <div class="system-value">~45-70 MB / gün</div>
+      <div class="system-note">100 gün: ~4.5-7 GB</div>
     </div>
   </div>
 
