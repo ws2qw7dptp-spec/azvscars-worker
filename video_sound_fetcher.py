@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import random
 import time
@@ -30,6 +31,13 @@ VIDEO_QUERIES = {
     "dream_garage": ["luxury car garage", "supercar showroom", "sports cars"],
     "fail_vs_win": ["car design detail", "luxury car exterior", "sports car front"],
     "real_verdict": ["car driving night", "sports car road", "luxury car city"],
+}
+
+CAR_SPECIFIC_TYPES = {
+    "sound_battle", "night_pov", "hidden_features", "owner_experience",
+    "guess_the_car", "engine_sound_quiz", "drag_race_result",
+    "interior_battle", "exterior_details", "satisfaction", "what_change",
+    "history", "real_verdict",
 }
 
 SFX_QUERIES = [
@@ -176,19 +184,19 @@ def cinematic_script(reel_type, car1, car2):
         }
     if reel_type == "dream_garage":
         return {
-            "title": "DREAM GARAGE",
+            "title": "ARZU QARAJI",
             "cues": ["$500K BÜDCƏ", "3 MAŞIN SEÇ", "GÜNDƏLİK", "HƏFTƏSONU", "SİYAHINI YAZ"],
             "caption": "$500K büdcən olsa qarajına hansı 3 maşını qoyardın?",
         }
     if reel_type == "fail_vs_win":
         return {
-            "title": "FAIL YOXSA WIN?",
+            "title": "UĞUR YOXSA SƏHV?",
             "cues": ["ƏN YAXŞI DETAL", "ƏN ZƏİF DETAL", "DİZAYN", "SƏS", "SƏNİN FİKRİN?"],
             "caption": "Bu dizayn win-dir, yoxsa fail? Sənin fikrin daha maraqlıdır.",
         }
     if reel_type == "real_verdict":
         return {
-            "title": "REAL VERDICT",
+            "title": "YEKUN QƏRAR",
             "cues": ["MƏN OLSAYDIM", "1 SƏBƏB", "2 SƏBƏB", "3 SƏBƏB", "RAZISAN?"],
             "caption": f"Mən olsaydım seçimimi 3 səbəblə edərdim. Sən razısan, yoxsa {car1}/{car2} arasında başqa qalib var?",
         }
@@ -205,12 +213,39 @@ def cinematic_script(reel_type, car1, car2):
     }
 
 
-def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3):
+def _search_queries(reel_type, car1="", car2=""):
+    generic = list(VIDEO_QUERIES.get(reel_type, VIDEO_QUERIES["pov_decision"]))
+    if reel_type not in CAR_SPECIFIC_TYPES:
+        return generic
+    suffixes = {
+        "sound_battle": "exhaust rev drive by",
+        "night_pov": "night POV interior driving",
+        "hidden_features": "interior features",
+        "owner_experience": "review driving",
+        "guess_the_car": "headlights interior detail",
+        "engine_sound_quiz": "engine exhaust sound",
+        "drag_race_result": "launch acceleration",
+        "interior_battle": "interior ambient lights",
+        "exterior_details": "exterior cinematic details",
+        "satisfaction": "start button exhaust ASMR",
+        "what_change": "modified cinematic",
+        "history": "generations history",
+        "real_verdict": "review cinematic",
+    }
+    suffix = suffixes.get(reel_type, "cinematic driving")
+    exact = [f"{name} {suffix}" for name in (car1, car2) if name]
+    return exact + generic
+
+
+def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3, car1="", car2=""):
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     seed = f"{reel_type}:{int(time.time() // 3600)}"
-    queries = list(VIDEO_QUERIES.get(reel_type, VIDEO_QUERIES["pov_decision"]))
-    random.Random(seed).shuffle(queries)
+    queries = _search_queries(reel_type, car1, car2)
+    exact_count = min(2, len([name for name in (car1, car2) if name]))
+    generic = queries[exact_count:]
+    random.Random(seed).shuffle(generic)
+    queries = queries[:exact_count] + generic
 
     videos = []
     errors = []
@@ -219,9 +254,10 @@ def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3):
             break
         for provider in (_download_pexels_video, _download_pixabay_video):
             try:
-                path = provider(query, out, len(videos))
-                if path and path not in videos:
-                    videos.append(path)
+                item = provider(query, out, len(videos))
+                path = item.get("path") if item else None
+                if path and path not in [video["path"] for video in videos]:
+                    videos.append(item)
                     break
             except Exception as exc:
                 errors.append(f"{provider.__name__}:{query}:{exc}")
@@ -234,7 +270,8 @@ def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3):
             errors.append(f"freesound:{exc}")
 
     return {
-        "videos": videos[:max_videos],
+        "videos": [item["path"] for item in videos[:max_videos]],
+        "sources": [{k: v for k, v in item.items() if k != "path"} for item in videos[:max_videos]],
         "sfx": sfx[:max_sfx],
         "errors": errors[-6:],
     }
@@ -252,6 +289,7 @@ def _download_pexels_video(query, output_dir, index):
     )
     res.raise_for_status()
     videos = res.json().get("videos", [])
+    candidates = []
     for item in videos:
         files = item.get("video_files", [])
         ranked = sorted(
@@ -261,10 +299,22 @@ def _download_pexels_video(query, output_dir, index):
                 -int(f.get("height") or 0),
             ),
         )
-        for file_info in ranked:
-            path = output_dir / f"pexels_{index}.mp4"
-            if _download_file(file_info["link"], path, max_bytes=80 * 1024 * 1024):
-                return str(path)
+        for file_info in ranked[:2]:
+            height = int(file_info.get("height") or 0)
+            width = int(file_info.get("width") or 0)
+            duration = float(item.get("duration") or 0)
+            score = (40 if height > width else 0) + min(height, 1920) / 100 + min(duration, 20)
+            candidates.append((score, item, file_info))
+    for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
+        path = output_dir / f"pexels_{index}.mp4"
+        if _download_file(file_info["link"], path, max_bytes=80 * 1024 * 1024):
+            return {
+                "path": str(path), "provider": "pexels", "id": str(item.get("id")),
+                "query": query, "source_url": item.get("url", ""),
+                "creator": (item.get("user") or {}).get("name", ""),
+                "width": file_info.get("width"), "height": file_info.get("height"),
+                "duration": item.get("duration"),
+            }
     return None
 
 
@@ -293,7 +343,12 @@ def _download_pixabay_video(query, output_dir, index):
         for file_info in ranked:
             path = output_dir / f"pixabay_{index}.mp4"
             if _download_file(file_info["url"], path, max_bytes=80 * 1024 * 1024):
-                return str(path)
+                return {
+                    "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
+                    "query": query, "source_url": item.get("pageURL", ""),
+                    "creator": item.get("user", ""), "width": file_info.get("width"),
+                    "height": file_info.get("height"), "duration": item.get("duration"),
+                }
     return None
 
 
