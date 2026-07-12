@@ -78,10 +78,8 @@ def _frames_from_video(path, seconds, cue, progress_start, progress_span):
         return []
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
     source_fps = cap.get(cv2.CAP_PROP_FPS) or 25
+    # Keep picture and native engine audio on the same source timeline.
     start = 0
-    if total > source_fps * seconds * 1.5:
-        start = int((total - source_fps * seconds) * 0.18)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, start)
 
     frames_needed = int(seconds * FPS)
     frames = []
@@ -128,7 +126,7 @@ def _end_card_frames(end_slide_path, seconds):
     return [canvas.copy() for _ in range(int(seconds * FPS))]
 
 
-def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, output_path, script, sfx_paths=None, duration_sec=13.5):
+def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, output_path, script, sfx_paths=None, source_video_paths=None, duration_sec=13.5):
     if not video_paths and not fallback_slide_paths:
         raise ValueError("No video or fallback slide paths provided.")
 
@@ -162,17 +160,32 @@ def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, out
         for frame in frames:
             writer.write(frame)
         writer.release()
-        _mux_audio(temp_video, output_path, len(frames) / FPS, sfx_paths or [])
+        _mux_audio(
+            temp_video, output_path, len(frames) / FPS, sfx_paths or [],
+            source_video_paths or video_paths, segment_seconds,
+        )
     return output_path
 
 
-def _mux_audio(video_path, output_path, duration, sfx_paths):
+def _has_audio(path):
+    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    result = subprocess.run(
+        [ffmpeg, "-hide_banner", "-i", path],
+        capture_output=True, text=True,
+    )
+    return "Audio:" in result.stderr
+
+
+def _mux_audio(video_path, output_path, duration, sfx_paths, source_video_paths, segment_seconds):
     audio_inputs = []
     music = reel_renderer.select_audio_file(output_path)
     if music:
         audio_inputs.append(("music", music, 0))
     for idx, sfx in enumerate(sfx_paths[:5]):
-        audio_inputs.append(("sfx", sfx, int((0.9 + idx * 1.8) * 1000)))
+        audio_inputs.append(("sfx", sfx, int((0.35 + idx * segment_seconds) * 1000)))
+    for idx, source in enumerate(source_video_paths[:3]):
+        if _has_audio(source):
+            audio_inputs.append(("source", source, int(idx * segment_seconds * 1000)))
 
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
     if not audio_inputs:
@@ -187,8 +200,9 @@ def _mux_audio(video_path, output_path, duration, sfx_paths):
     labels = []
     for i, (kind, _, delay_ms) in enumerate(audio_inputs, start=1):
         label = f"a{i}"
-        volume = "0.20" if kind == "music" else "0.85"
-        chain = f"[{i}:a]atrim=0:{duration:.2f},asetpts=PTS-STARTPTS,volume={volume}"
+        volume = "0.16" if kind == "music" else ("0.72" if kind == "source" else "0.82")
+        trim = min(duration, segment_seconds + 0.4) if kind == "source" else duration
+        chain = f"[{i}:a]atrim=0:{trim:.2f},asetpts=PTS-STARTPTS,volume={volume}"
         if delay_ms:
             chain += f",adelay={delay_ms}|{delay_ms}"
         chain += f"[{label}]"
