@@ -29,6 +29,7 @@ concurrency:
           - war
           - night
           - cinematic
+          - stories
         required: false
         default: "main"
       make_reel:
