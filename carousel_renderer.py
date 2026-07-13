@@ -213,6 +213,10 @@ def draw_centered(draw, text: str, f, y: int, color=COLOR_WHITE):
 
 # ─── Slide Builders ────────────────────────────────────────────────────────────
 
+def _display_name(data: dict, name: str) -> str:
+    return "ADI NƏDİR?" if data.get("hide_names_until_end", True) else name
+
+
 def build_cover_slide(base: Image.Image, data: dict, out: str):
     """Slide 1 – title badge + VS circle + car names."""
     img = base.copy()
@@ -233,15 +237,15 @@ def build_cover_slide(base: Image.Image, data: dict, out: str):
     draw_vs_circle(draw, vs_y)
 
     # Car names
-    draw_car_name(draw, data["car1_name"], "left")
-    draw_car_name(draw, data["car2_name"], "right")
+    draw_car_name(draw, _display_name(data, data["car1_name"]), "left")
+    draw_car_name(draw, _display_name(data, data["car2_name"]), "right")
 
     img.convert("RGB").save(out)
 
 
 def build_stat_slide(base: Image.Image, title: str,
                      stat1: str, stat2: str,
-                     name1: str, name2: str, out: str):
+                     name1: str, name2: str, out: str, hide_names_until_end: bool = True):
     """Slides 2-4 – title badge + stat badges below cars + VS circle + names."""
     img = base.copy()
     img.alpha_composite(Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 110)))
@@ -262,14 +266,16 @@ def build_stat_slide(base: Image.Image, title: str,
                max_w=half_max_w, sz=78)
 
     # Car names
-    draw_car_name(draw, name1, "left")
-    draw_car_name(draw, name2, "right")
+    label1 = "ADI NƏDİR?" if hide_names_until_end else name1
+    label2 = "ADI NƏDİR?" if hide_names_until_end else name2
+    draw_car_name(draw, label1, "left")
+    draw_car_name(draw, label2, "right")
 
     img.convert("RGB").save(out)
 
 
-def build_outro_slide(base: Image.Image, out: str):
-    """Slide 5 – CTA with the current four-post daily schedule."""
+def build_outro_slide(base: Image.Image, out: str, data: dict | None = None):
+    """Slide 5 – reveal + CTA with the current four-post daily schedule."""
     img = base.copy()
     img.alpha_composite(Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 215)))
     draw = ImageDraw.Draw(img)
@@ -278,9 +284,15 @@ def build_outro_slide(base: Image.Image, out: str):
     f_handle = get_font(60)
     draw_centered(draw, "@azvscars", f_handle, 320, (200, 200, 200))
 
-    # Big CTA
-    f_cta = get_font(122)
-    draw_centered(draw, "TƏRƏFİNİ SEÇ!", f_cta, 430, COLOR_WHITE)
+    f_cta = get_font(112)
+    if data and data.get("car1_name") and data.get("car2_name"):
+        draw_centered(draw, "CAVAB", f_cta, 390, COLOR_WHITE)
+        reveal_font = get_font(58)
+        draw_car_name(draw, data["car1_name"], "left")
+        draw_car_name(draw, data["car2_name"], "right")
+        draw_centered(draw, "İNDİ TƏRƏFİNİ SEÇ", reveal_font, 500, COLOR_RED)
+    else:
+        draw_centered(draw, "TƏRƏFİNİ SEÇ!", f_cta, 430, COLOR_WHITE)
 
     # Divider line
     draw.line([(120, 585), (CANVAS_W - 120, 585)], fill=COLOR_RED, width=3)
@@ -312,22 +324,25 @@ def render_carousel(data: dict, img_path1: str, img_path2: str, output_dir: str)
                      data["slide2_title"],
                      data["slide2_car1_stat"], data["slide2_car2_stat"],
                      data["car1_name"],        data["car2_name"],
-                     os.path.join(output_dir, "slide2_power.png"))
+                     os.path.join(output_dir, "slide2_power.png"),
+                     data.get("hide_names_until_end", True))
     print("  ✅ Slide 2: Engine / Power")
 
     build_stat_slide(base,
                      data["slide3_title"],
                      data["slide3_car1_stat"], data["slide3_car2_stat"],
                      data["car1_name"],        data["car2_name"],
-                     os.path.join(output_dir, "slide3_speed.png"))
+                     os.path.join(output_dir, "slide3_speed.png"),
+                     data.get("hide_names_until_end", True))
     print("  ✅ Slide 3: Speed")
 
     build_stat_slide(base,
                      data["slide4_title"],
                      data["slide4_car1_stat"], data["slide4_car2_stat"],
                      data["car1_name"],        data["car2_name"],
-                     os.path.join(output_dir, "slide4_price.png"))
+                     os.path.join(output_dir, "slide4_price.png"),
+                     data.get("hide_names_until_end", True))
     print("  ✅ Slide 4: Price")
 
-    build_outro_slide(base, os.path.join(output_dir, "slide5_outro.png"))
+    build_outro_slide(base, os.path.join(output_dir, "slide5_outro.png"), data)
     print("  ✅ Slide 5: Outro / CTA")
