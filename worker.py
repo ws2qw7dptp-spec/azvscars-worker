@@ -7,12 +7,13 @@ Handles:
 Called by Cloudflare Functions via workflow_dispatch.
 Reports status to Cloudflare KV so frontend can poll /api/status/[sid].
 """
-import os, sys, json, uuid, time, tempfile, gc, argparse, base64
+import os, sys, json, uuid, time, tempfile, gc, argparse, base64, random
 import requests as http_req
 from dotenv import load_dotenv
 load_dotenv()
 
 import cloudflare_storage as cf
+from publish_quality import apply_publish_quality
 
 SLIDE_KEYS = [
     "slide1_cover.png", "slide2_power.png", "slide3_speed.png",
@@ -148,6 +149,28 @@ def ingest_to_pages(sid, meta, files):
         raise RuntimeError(f"Pages ingest failed: {res.status_code} {res.text}")
     return res.json()
 
+
+def maybe_publish_post_story_reminder(sid, admin_pass):
+    try:
+        if os.environ.get("POST_STORY_REMINDER", "true").lower() != "true":
+            return
+        delay_raw = os.environ.get("POST_STORY_REMINDER_DELAY_SECONDS", "").strip()
+        if delay_raw:
+            delay = max(0, int(delay_raw))
+        else:
+            delay = random.randint(120, 240)
+        print(f"[worker] story reminder waits {delay}s for sid={sid}")
+        time.sleep(delay)
+        res = http_req.post(
+            f"{pages_base_url()}/api/publish/{sid}",
+            json={"media_type": "story", "story_file": "slide1_cover.png"},
+            headers={"X-Admin-Password": admin_pass},
+            timeout=90,
+        )
+        print(f"[worker] post story reminder response: {res.status_code} {res.text}")
+    except Exception as exc:
+        print(f"[worker] story reminder skipped after error: {exc}")
+
 # ─── Generate Action ─────────────────────────────────────────────────────────
 
 def action_cinematic_generate(sid, mark_done=True):
@@ -160,6 +183,7 @@ def action_cinematic_generate(sid, mark_done=True):
     data = generate_comparison(post_type="night")
     reel_type = choose_reel_type(sid)
     script = cinematic_script(reel_type, data["car1_name"], data["car2_name"])
+    data = apply_publish_quality(data, post_type="cinematic", media_type="reel")
     use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -198,7 +222,7 @@ def action_cinematic_generate(sid, mark_done=True):
         )
         reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
 
-        caption = script["caption"] + "\n\n" + data.get("hashtags", "")
+        caption = data["caption"]
         meta = {
             "sid": sid,
             "post_type": "cinematic",
@@ -208,6 +232,8 @@ def action_cinematic_generate(sid, mark_done=True):
             "flip1": flip1,
             "flip2": flip2,
             "caption": caption,
+            "alt_text": data.get("alt_text", ""),
+            "image_description": data.get("image_description", ""),
             "data": {
                 **data,
                 "cinematic_script": script,
@@ -254,6 +280,8 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
 
         set_status(sid, "running", "☁️ AI ilə müqayisə yaradılır…")
         data = generate_comparison(post_type=post_type)
+        media_type_for_quality = "reel" if make_reel else "carousel"
+        data = apply_publish_quality(data, post_type=post_type, media_type=media_type_for_quality)
 
         set_status(sid, "running", f"🖼 Şəkillər yüklənir: {data['car1_name']} / {data['car2_name']}")
 
@@ -294,7 +322,9 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 "car2_name":  data["car2_name"],
                 "flip1":      flip1,
                 "flip2":      flip2,
-                "caption":    data["caption"] + "\n\n" + data.get("hashtags", ""),
+                "caption":    data["caption"],
+                "alt_text":   data.get("alt_text", ""),
+                "image_description": data.get("image_description", ""),
                 "data":       data,
                 "slide_urls": slide_urls,
                 "reel_url":   reel_url,
@@ -445,6 +475,7 @@ if __name__ == "__main__":
                 )
                 print(f"[worker] auto_publish response: {res.status_code} {res.text}")
                 res.raise_for_status()
+                maybe_publish_post_story_reminder(args.sid, admin_pass)
                 set_status(args.sid, "done", "✅ Hazırlandı və Instagram-a paylaşıldı!")
             except Exception as e:
                 print(f"[worker] auto_publish error: {e}")
