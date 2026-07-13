@@ -44,7 +44,7 @@ def _cover_resize(frame):
     return resized[y:y + OUT_H, x:x + OUT_W]
 
 
-def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False):
+def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False, show_divider=True):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(rgb).convert("RGBA")
     overlay = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
@@ -52,7 +52,8 @@ def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False):
 
     draw.rectangle([0, 0, OUT_W, 320], fill=(0, 0, 0, 135))
     draw.rectangle([0, OUT_H - 320, OUT_W, OUT_H], fill=(0, 0, 0, 155))
-    draw.rectangle([OUT_W // 2 - 3, 0, OUT_W // 2 + 3, OUT_H], fill=(*COLOR_RED, 180))
+    if show_divider:
+        draw.rectangle([OUT_W // 2 - 3, 0, OUT_W // 2 + 3, OUT_H], fill=(*COLOR_RED, 180))
 
     draw.rounded_rectangle([60, 78, OUT_W - 60, 188], radius=0, fill=(*COLOR_RED, 245))
     font = _fit_font(draw, text.upper(), OUT_W - 160, 76 if title else 68)
@@ -72,7 +73,7 @@ def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False):
     return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
 
-def _frames_from_video(path, seconds, cue, progress_start, progress_span):
+def _frames_from_video(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True):
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         return []
@@ -95,12 +96,16 @@ def _frames_from_video(path, seconds, cue, progress_start, progress_span):
         zw, zh = int(OUT_W / zoom), int(OUT_H / zoom)
         x, y = (OUT_W - zw) // 2, (OUT_H - zh) // 2
         frame = cv2.resize(frame[y:y + zh, x:x + zw], (OUT_W, OUT_H), interpolation=cv2.INTER_LINEAR)
-        frames.append(_draw_overlay(frame, cue, progress=progress_start + progress_span * i / max(1, frames_needed)))
+        frames.append(_draw_overlay(
+            frame, cue, subtext=subtext,
+            progress=progress_start + progress_span * i / max(1, frames_needed),
+            show_divider=show_divider,
+        ))
     cap.release()
     return frames
 
 
-def _frames_from_image(path, seconds, cue, progress_start, progress_span):
+def _frames_from_image(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True):
     img = cv2.imread(path)
     if img is None:
         img = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
@@ -108,7 +113,11 @@ def _frames_from_image(path, seconds, cue, progress_start, progress_span):
     frames = []
     total = int(seconds * FPS)
     for i in range(total):
-        frames.append(_draw_overlay(img.copy(), cue, progress=progress_start + progress_span * i / max(1, total)))
+        frames.append(_draw_overlay(
+            img.copy(), cue, subtext=subtext,
+            progress=progress_start + progress_span * i / max(1, total),
+            show_divider=show_divider,
+        ))
     return frames
 
 
@@ -131,6 +140,8 @@ def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, out
         raise ValueError("No video or fallback slide paths provided.")
 
     cues = script.get("cues") or [script.get("title", "AVTO DÖYÜŞÜ")]
+    show_divider = bool(script.get("is_comparison", True))
+    subtext = "SOL: ADI NƏDİR?  •  SAĞ: ADI NƏDİR?" if show_divider else "ADI NƏDİR?  •  SONDA AÇILIR"
     visual_sources = list(video_paths) or list(fallback_slide_paths)
     main_seconds = max(8.0, duration_sec - 2.0)
     segment_count = min(len(cues), max(3, len(visual_sources) * 2))
@@ -143,9 +154,9 @@ def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, out
         progress_start = idx / (segment_count + 1)
         progress_span = 1 / (segment_count + 1)
         if source.lower().endswith((".mp4", ".mov", ".webm", ".m4v")):
-            segment = _frames_from_video(source, segment_seconds, cue, progress_start, progress_span)
+            segment = _frames_from_video(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider)
         else:
-            segment = _frames_from_image(source, segment_seconds, cue, progress_start, progress_span)
+            segment = _frames_from_image(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider)
         frames.extend(segment)
 
     if end_slide_path:
