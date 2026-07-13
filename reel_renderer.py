@@ -3,6 +3,7 @@ import os
 import ffmpeg
 import imageio_ffmpeg
 import hashlib
+import math
 
 DEFAULT_AUDIO_FILES = [
     "mercy-line-vs-m5.mp3",
@@ -53,7 +54,7 @@ def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=
     total_duration = len(slide_paths) * slide_duration_sec
     
     try:
-        for path in slide_paths:
+        for slide_index, path in enumerate(slide_paths):
             frame = cv2.imread(path)
             if frame is None:
                 print(f"Warning: Could not read {path}, skipping.")
@@ -63,9 +64,17 @@ def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=
             if frame.shape[:2] != (height, width):
                 frame = cv2.resize(frame, (width, height))
             
-            # Write the frame multiple times for duration
-            for _ in range(frames_per_slide):
-                video.write(frame)
+            for i in range(frames_per_slide):
+                t = i / max(1, frames_per_slide - 1)
+                ease = 0.5 - 0.5 * math.cos(math.pi * t)
+                zoom = 1.0 + 0.028 * ease
+                crop_w = int(width / zoom)
+                crop_h = int(height / zoom)
+                drift = int((width - crop_w) * (0.2 + 0.6 * ((slide_index % 2) * (1 - ease) + (1 - slide_index % 2) * ease)))
+                x = min(width - crop_w, max(0, drift))
+                y = (height - crop_h) // 2
+                animated = cv2.resize(frame[y:y + crop_h, x:x + crop_w], (width, height), interpolation=cv2.INTER_LINEAR)
+                video.write(animated)
     finally:
         video.release()
         
