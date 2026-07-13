@@ -90,6 +90,8 @@ export async function onRequestPost({ request, env, params }) {
       story_slot: meta.story_slot || "",
       car1: meta.car1_name || "",
       car2: meta.car2_name || "",
+      alt_text: meta.alt_text || meta.data?.alt_text || "",
+      image_description: meta.image_description || meta.data?.image_description || "",
       created_at: meta.created_at || "",
       is_published: Boolean(meta.is_published),
       published: meta.published || {},
