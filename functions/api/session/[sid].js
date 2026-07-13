@@ -41,6 +41,8 @@ export async function onRequestGet({ request, env, params }) {
     flip1: meta.flip1 || false,
     flip2: meta.flip2 || false,
     caption: meta.caption || "",
+    alt_text: meta.alt_text || meta.data?.alt_text || "",
+    image_description: meta.image_description || meta.data?.image_description || "",
     slides: slides,
     reel_url: reel_url,
     is_published: Boolean(carousel_published || reel_published),
