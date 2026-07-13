@@ -78,6 +78,14 @@ jobs:
           echo "STORY_SLOT=$SLOT" >> "$GITHUB_ENV"
           echo "STORY_FILES=$STORY_FILES" >> "$GITHUB_ENV"
 
+      - name: Humanize Scheduled Story Time
+        if: github.event_name == 'schedule'
+        run: |
+          seed="$(TZ=Asia/Baku date +%Y%m%d)-story-${{ github.event.schedule }}"
+          jitter=$(( 120 + ( $(printf "%s" "$seed" | cksum | awk '{print $1}') % 780 ) ))
+          echo "Natural story jitter: ${jitter}s"
+          sleep "$jitter"
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
