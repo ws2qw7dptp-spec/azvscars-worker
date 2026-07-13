@@ -301,9 +301,9 @@ def build_outro_slide(base: Image.Image, out: str, data: dict | None = None):
     f_label = get_font(58)
     draw_centered(draw, "HƏR GÜN 4 AVTO DÖYÜŞ", f_label, 625, (210, 210, 210))
 
-    f_time = get_font(82)
-    draw_centered(draw, "09:00  /  13:00", f_time, 720, COLOR_RED)
-    draw_centered(draw, "19:30  /  22:45", f_time, 810, COLOR_RED)
+    f_time = get_font(72)
+    draw_centered(draw, "09:00-09:25  /  13:00-13:25", f_time, 720, COLOR_RED)
+    draw_centered(draw, "19:30-19:55  /  22:45-23:10", f_time, 810, COLOR_RED)
 
     f_zone = get_font(44)
     draw_centered(draw, "BAKI VAXTI İLƏ", f_zone, 910, (160, 160, 160))
