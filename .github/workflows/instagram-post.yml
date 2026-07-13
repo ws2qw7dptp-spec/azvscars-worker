@@ -70,6 +70,14 @@ jobs:
             fi
           fi
 
+      - name: Humanize Scheduled Time
+        if: github.event_name == 'schedule'
+        run: |
+          seed="$(TZ=Asia/Baku date +%Y%m%d)-${{ github.event.schedule }}"
+          jitter=$(( 180 + ( $(printf "%s" "$seed" | cksum | awk '{print $1}') % 1320 ) ))
+          echo "Natural schedule jitter: ${jitter}s"
+          sleep "$jitter"
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
