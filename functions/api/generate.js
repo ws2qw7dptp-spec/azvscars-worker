@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
   const inputs = {
     action: isStories ? "stories" : "generate",
     sid,
-    post_type,
+    post_type: isStories ? "stories" : post_type,
     make_reel,
     auto_publish,
   };
