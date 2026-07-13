@@ -505,37 +505,37 @@ body {
     </div>
     <div class="tracker-grid">
       <div class="track-item" id="track-quick">
-        <div class="track-time">⚡ 09:00</div>
+        <div class="track-time">⚡ 09:00-09:25</div>
         <div class="track-name">Sürücü Seçimi</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-main">
-        <div class="track-time">🔥 13:00</div>
+        <div class="track-time">🔥 13:00-13:25</div>
         <div class="track-name">Real Avto Döyüş</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-war">
-        <div class="track-time">💬 19:30</div>
+        <div class="track-time">💬 19:30-19:55</div>
         <div class="track-name">Şərh Savaşı</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-cinematic">
-        <div class="track-time">🌙 22:45</div>
+        <div class="track-time">🌙 22:45-23:10</div>
         <div class="track-name">Cinematic Reel</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-morning">
-        <div class="track-time">📲 08:45</div>
+        <div class="track-time">📲 08:45-09:00</div>
         <div class="track-name">Səhər Story-ləri</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-noon">
-        <div class="track-time">📲 14:30</div>
+        <div class="track-time">📲 14:30-14:45</div>
         <div class="track-name">Günorta Story-ləri</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-evening">
-        <div class="track-time">📲 20:45</div>
+        <div class="track-time">📲 20:45-21:00</div>
         <div class="track-name">Axşam Story-ləri</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
@@ -546,7 +546,7 @@ body {
     <div class="system-card">
       <div class="system-kicker">Feed</div>
       <div class="system-value">4 / gün</div>
-      <div class="system-note">09:00, 13:00, 19:30, 22:45</div>
+      <div class="system-note">Təbii random vaxt pəncərələri</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">Reel</div>
@@ -556,7 +556,7 @@ body {
     <div class="system-card">
       <div class="system-kicker">Story</div>
       <div class="system-value">3 run / gün</div>
-      <div class="system-note">08:45, 14:30, 20:45</div>
+      <div class="system-note">+ postdan sonra reminder story</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">R2 Storage</div>
@@ -629,6 +629,10 @@ body {
     <div class="caption-wrap">
       <div class="caption-label">Instagram Yazısı</div>
       <textarea class="caption-text" id="captionText" rows="5" placeholder="Caption buraya yazılacaq…"></textarea>
+    </div>
+    <div class="caption-wrap">
+      <div class="caption-label">Alt Text / Təsvir</div>
+      <textarea class="caption-text" id="altText" rows="3" readonly placeholder="Alt text burada görünəcək…"></textarea>
     </div>
 
     <!-- Actions -->
@@ -780,6 +784,7 @@ async function loadSession(sid) {
 
   updateFlipBtns(d.flip1, d.flip2, d.car1_name, d.car2_name);
   document.getElementById('captionText').value = d.caption;
+  document.getElementById('altText').value = d.alt_text || d.image_description || '';
 
   const pubBtn = document.getElementById('publishBtn');
   const pubReelBtn = document.getElementById('publishReelBtn');
@@ -880,15 +885,15 @@ async function deletePost() {
 // ── History & Tracking ────────────────────────────────────────────────────────
 let todayHistory = [];
 const DAILY_POST_PLAN = [
-  { type: 'quick', label: '09:00 Tez Seçim' },
-  { type: 'main', label: '13:00 Əsas Duel' },
-  { type: 'war', label: '19:30 Şərh Savaşı' },
-  { type: 'cinematic', label: '22:45 Cinematic Reel' },
+  { type: 'quick', label: '09:00-09:25 Tez Seçim' },
+  { type: 'main', label: '13:00-13:25 Əsas Duel' },
+  { type: 'war', label: '19:30-19:55 Şərh Savaşı' },
+  { type: 'cinematic', label: '22:45-23:10 Cinematic Reel' },
 ];
 const DAILY_STORY_PLAN = [
-  { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
-  { type: 'story-noon', postType: 'stories', storySlot: 'noon', label: '14:30 Günorta Story-ləri', files: 'story10_daily_question.jpg,story6_china_germany.jpg,story7_ev_v8.jpg' },
-  { type: 'story-evening', postType: 'stories', storySlot: 'evening', label: '20:45 Axşam Story-ləri', files: 'story5_comment.jpg,story8_suv_war.jpg' },
+  { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45-09:00 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
+  { type: 'story-noon', postType: 'stories', storySlot: 'noon', label: '14:30-14:45 Günorta Story-ləri', files: 'story10_daily_question.jpg,story6_china_germany.jpg,story7_ev_v8.jpg' },
+  { type: 'story-evening', postType: 'stories', storySlot: 'evening', label: '20:45-21:00 Axşam Story-ləri', files: 'story5_comment.jpg,story8_suv_war.jpg' },
 ];
 const DAILY_PLAN = [...DAILY_POST_PLAN, ...DAILY_STORY_PLAN];
 const POST_TYPE_LABELS = {
