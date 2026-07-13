@@ -72,6 +72,19 @@ REEL_TYPES = [
     "real_verdict",
 ]
 
+COMPARISON_REEL_TYPES = {
+    "sound_battle",
+    "owner_experience",
+    "which_buy",
+    "drag_race_result",
+    "interior_battle",
+    "exterior_details",
+    "pov_decision",
+    "pov_buying",
+    "fail_vs_win",
+    "real_verdict",
+}
+
 
 def _seeded_choice(items, seed):
     digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
@@ -85,133 +98,102 @@ def choose_reel_type(seed: str) -> str:
     return _seeded_choice(REEL_TYPES, seed)
 
 
-def cinematic_script(reel_type, car1, car2):
-    if reel_type == "sound_battle":
-        return {
-            "title": "QULAĞIN HANSINI SEÇİR?",
-            "cues": ["SOYUQ START", "REV", "DRIVE-BY", "TUNEL SƏSİ", f"{car1} YOXSA {car2}?"],
-            "caption": f"Qulağın hansını seçir: {car1} yoxsa {car2}? Səsi hiss et, tərəfini şərhdə yaz.",
-        }
-    if reel_type == "night_pov":
-        return {
-            "title": "BİR GECƏLİK AÇAR",
-            "cues": ["GECƏ POV", "SÜKAN", "DASHBOARD", "SƏS", "HANSINI GÖTÜRƏRDİN?"],
-            "caption": f"Bir gecəlik açar səndə olsa hansını götürərdin: {car1} yoxsa {car2}? Sol yoxsa sağ?",
-        }
-    if reel_type == "hidden_features":
-        return {
-            "title": "GİZLİ FUNKSİYALAR",
-            "cues": ["BUNU BİLİRDİN?", "LAUNCH", "DRIFT MODE", "AMBIENT", "HANSI DAHA MARAQLIDIR?"],
-            "caption": f"{car1} və {car2} sadəcə rəqəm deyil. Hansının gizli funksiyaları sənə daha maraqlı gəldi?",
-        }
-    if reel_type == "owner_experience":
-        return {
-            "title": "SAHİB TƏCRÜBƏSİ",
-            "cues": ["YANACAQ", "SERVİS", "ETİBAR", "GÜNDƏLİK RAHATLIQ", "HƏR GÜN HANSI?"],
-            "caption": f"Kağız üzərində yox, real istifadə üçün hansını seçərdin: {car1} yoxsa {car2}?",
-        }
-    if reel_type == "guess_the_car":
-        return {
-            "title": "HANSI MAŞINDIR?",
-            "cues": ["FƏRƏLƏRƏ BAX", "SƏSİ DİNLƏ", "SALONU TANIDIN?", "3...2...1", "CAVABI ŞƏRHƏ YAZ"],
-            "caption": "Səsi və detalları tanıdın? Maşını şərhdə yaz, sonra cavabı yoxla.",
-        }
-    if reel_type == "supercar_facts":
-        return {
-            "title": "5 SƏRT FAKT",
-            "cues": ["1 FAKT", "2 FAKT", "3 FAKT", "4 FAKT", "BUNU BİLİRDİN?"],
-            "caption": "Supercar dünyasında rəqəmlərdən də maraqlı detallar var. Hansı fakt səni təəccübləndirdi?",
-        }
-    if reel_type == "expensive_mistakes":
-        return {
-            "title": "BAHALI SƏHVLƏR",
-            "cues": ["ALMAMIŞDAN ƏVVƏL", "SERVİSİ YOXLAT", "TARİXÇƏ VACİBDİR", "SƏSƏ ALDANMA", "BUNU SAXLA"],
-            "caption": "Bahalı maşın alanda ən böyük səhv təkcə qiymətə baxmaqdır. Hansı səhvi ən çox görmüsən?",
-        }
-    if reel_type == "which_buy":
-        return {
-            "title": "HANSINI ALARDIN?",
-            "cues": ["$30K", "$50K", "$80K", "$150K", "QƏRARINI YAZ"],
-            "caption": f"Büdcə səndə olsa hansını alardın: {car1} yoxsa {car2}? Cavabı qısa yaz.",
-        }
-    if reel_type == "engine_sound_quiz":
-        return {
-            "title": "SƏSİ TANIDIN?",
-            "cues": ["3 SANİYƏ DİNLƏ", "HANSI MÜHƏRRİK?", "V8?", "TURBO?", "CAVABI YAZ"],
-            "caption": "Mühərrik səsini tanıdın? Cavabı şərhdə yaz.",
-        }
-    if reel_type == "drag_race_result":
-        return {
-            "title": "DRAG NƏTİCƏSİ",
-            "cues": ["3", "2", "1", "LAUNCH", "SƏNİN QALİBİN?"],
-            "caption": f"Start xəttində hansına güvənərdin: {car1} yoxsa {car2}?",
-        }
-    if reel_type == "interior_battle":
-        return {
-            "title": "SALON QALİBİ?",
-            "cues": ["SÜKAN", "EKRAN", "AMBIENT", "OTURACAQ", f"{car1} YOXSA {car2}?"],
-            "caption": f"Salon qalibi hansıdır: {car1} yoxsa {car2}? Premium hissi hansı daha yaxşı verir?",
-        }
-    if reel_type == "exterior_details":
-        return {
-            "title": "DETAL DÖYÜŞÜ",
-            "cues": ["FƏRƏLƏR", "DİSKLƏR", "ARXA İŞIQLAR", "EGZOZ", "DİZAYN QALİBİ?"],
-            "caption": f"Detallarda hansı daha güclüdür: {car1} yoxsa {car2}?",
-        }
-    if reel_type == "satisfaction":
-        return {
-            "title": "AVTO ASMR",
-            "cues": ["QAPI SƏSİ", "START", "DÜYMƏLƏR", "GEAR", "BU HİSSİ SEVİRSƏN?"],
-            "caption": "Maşın adamı bu səsləri başa düşür. Ən xoş səs hansıdır?",
-        }
-    if reel_type == "what_change":
-        return {
-            "title": "NƏYİ DƏYİŞƏRDİN?",
-            "cues": ["BU SƏNİN OLSA", "İLK MOD?", "DİSK?", "SƏS?", "ŞƏRHƏ YAZ"],
-            "caption": f"{car1} və ya {car2} sənin olsa ilk nəyi dəyişərdin?",
-        }
-    if reel_type == "history":
-        return {
-            "title": "NİYƏ HÖRMƏT EDİRLƏR?",
-            "cues": ["KÖKÜ", "NƏSİLLƏR", "SÜRÜŞ", "STATUS", "SƏN RAZISAN?"],
-            "caption": "Bəzi maşınlara sadəcə performansa görə yox, tarixə görə hörmət edirlər. Sən razısan?",
-        }
-    if reel_type == "surprising_fact":
-        return {
-            "title": "GÖZLƏNMƏZ FAKT",
-            "cues": ["BUNU ÇOXU BİLMİR", "RƏQƏMƏ BAX", "HİSS BAŞQADIR", "SÜRPRİZ", "RAZISAN?"],
-            "caption": "Bəzən ən güclü görünən maşın ən ağıllı seçim olmur. Sən razısan?",
-        }
-    if reel_type == "dream_garage":
-        return {
-            "title": "ARZU QARAJI",
-            "cues": ["$500K BÜDCƏ", "3 MAŞIN SEÇ", "GÜNDƏLİK", "HƏFTƏSONU", "SİYAHINI YAZ"],
-            "caption": "$500K büdcən olsa qarajına hansı 3 maşını qoyardın?",
-        }
-    if reel_type == "fail_vs_win":
-        return {
-            "title": "UĞUR YOXSA SƏHV?",
-            "cues": ["ƏN YAXŞI DETAL", "ƏN ZƏİF DETAL", "DİZAYN", "SƏS", "SƏNİN FİKRİN?"],
-            "caption": "Bu dizayn win-dir, yoxsa fail? Sənin fikrin daha maraqlıdır.",
-        }
-    if reel_type == "real_verdict":
-        return {
-            "title": "YEKUN QƏRAR",
-            "cues": ["MƏN OLSAYDIM", "1 SƏBƏB", "2 SƏBƏB", "3 SƏBƏB", "RAZISAN?"],
-            "caption": f"Mən olsaydım seçimimi 3 səbəblə edərdim. Sən razısan, yoxsa {car1}/{car2} arasında başqa qalib var?",
-        }
-    if reel_type == "pov_buying":
-        return {
-            "title": "$120K SƏNDƏDİR",
-            "cues": ["PUL SƏNDƏDİR", "5", "4", "3", "TƏK BİRİNİ SEÇ"],
-            "caption": f"Sənə $120K verdim. Tək birini seç: {car1} yoxsa {car2}?",
-        }
+def _script(reel_type, title, cues, caption, compare=None):
+    is_comparison = reel_type in COMPARISON_REEL_TYPES if compare is None else compare
     return {
-        "title": "$100K SEÇİM",
-        "cues": ["SƏNƏ $100K VERDİM", "5 SANİYƏ", "SOL?", "SAĞ?", "QƏRARINI YAZ"],
-        "caption": f"$100K səndə olsa hansını alardın: {car1} yoxsa {car2}? Qərarını şərhdə yaz.",
+        "title": title,
+        "cues": cues,
+        "caption": caption,
+        "is_comparison": is_comparison,
+        "mystery_label": "ADI NƏDİR?",
+        "hook_rule": "Do not reveal car names before the final reveal card.",
     }
 
+
+def cinematic_script(reel_type, car1, car2):
+    if reel_type == "sound_battle":
+        return _script(reel_type, "QULAĞIN HANSINI SEÇİR?",
+            ["SOYUQ START", "REV", "DRIVE-BY", "TUNEL SƏSİ", "ADI NƏDİR?"],
+            f"Qulağın hansını seçir: {car1} yoxsa {car2}? Səsi hiss et, tərəfini şərhdə yaz.")
+    if reel_type == "night_pov":
+        return _script(reel_type, "BİR GECƏLİK AÇAR",
+            ["GECƏ POV", "SÜKAN", "DASHBOARD", "SƏS", "ADI NƏDİR?"],
+            f"Bir gecəlik açar səndə olsa hansını götürərdin: {car1} yoxsa {car2}? Sol yoxsa sağ?", compare=False)
+    if reel_type == "hidden_features":
+        return _script(reel_type, "GİZLİ FUNKSİYALAR",
+            ["BUNU BİLİRDİN?", "GİZLİ DÜYMƏ", "SÜRÜŞ MODU", "RAHATLIQ", "ADI NƏDİR?"],
+            f"{car1} və {car2} sadəcə rəqəm deyil. Hansının gizli funksiyaları sənə daha maraqlı gəldi?", compare=False)
+    if reel_type == "owner_experience":
+        return _script(reel_type, "SAHİB TƏCRÜBƏSİ",
+            ["YANACAQ", "SERVİS", "ETİBAR", "GÜNDƏLİK RAHATLIQ", "HƏR GÜN HANSI?"],
+            f"Kağız üzərində yox, real istifadə üçün hansını seçərdin: {car1} yoxsa {car2}?")
+    if reel_type == "guess_the_car":
+        return _script(reel_type, "HANSI MAŞINDIR?",
+            ["FƏRƏLƏRƏ BAX", "SƏSİ DİNLƏ", "SALONU TANIDIN?", "3...2...1", "ADI NƏDİR?"],
+            "Səsi və detalları tanıdın? Maşını şərhdə yaz, sonra cavabı yoxla.", compare=False)
+    if reel_type == "supercar_facts":
+        return _script(reel_type, "5 SƏRT FAKT",
+            ["1 FAKT", "2 FAKT", "3 FAKT", "4 FAKT", "ADI NƏDİR?"],
+            "Supercar dünyasında rəqəmlərdən də maraqlı detallar var. Hansı fakt səni təəccübləndirdi?", compare=False)
+    if reel_type == "expensive_mistakes":
+        return _script(reel_type, "BAHALI SƏHVLƏR",
+            ["ALMAMIŞDAN ƏVVƏL", "SERVİSİ YOXLAT", "TARİXÇƏ VACİBDİR", "SƏSƏ ALDANMA", "BUNU SAXLA"],
+            "Bahalı maşın alanda ən böyük səhv təkcə qiymətə baxmaqdır. Hansı səhvi ən çox görmüsən?", compare=False)
+    if reel_type == "which_buy":
+        return _script(reel_type, "HANSINI ALARDIN?",
+            ["$30K", "$50K", "$80K", "$150K", "QƏRARINI YAZ"],
+            f"Büdcə səndə olsa hansını alardın: {car1} yoxsa {car2}? Cavabı qısa yaz.")
+    if reel_type == "engine_sound_quiz":
+        return _script(reel_type, "SƏSİ TANIDIN?",
+            ["3 SANİYƏ DİNLƏ", "HANSI MÜHƏRRİK?", "V8?", "TURBO?", "ADI NƏDİR?"],
+            "Mühərrik səsini tanıdın? Cavabı şərhdə yaz.", compare=False)
+    if reel_type == "drag_race_result":
+        return _script(reel_type, "DRAG NƏTİCƏSİ",
+            ["3", "2", "1", "LAUNCH", "SƏNİN QALİBİN?"],
+            f"Start xəttində hansına güvənərdin: {car1} yoxsa {car2}?")
+    if reel_type == "interior_battle":
+        return _script(reel_type, "SALON QALİBİ?",
+            ["SÜKAN", "EKRAN", "AMBIENT", "OTURACAQ", "HANSI SALON?"],
+            f"Salon qalibi hansıdır: {car1} yoxsa {car2}? Premium hissi hansı daha yaxşı verir?")
+    if reel_type == "exterior_details":
+        return _script(reel_type, "DETAL DÖYÜŞÜ",
+            ["FƏRƏLƏR", "DİSKLƏR", "ARXA İŞIQLAR", "EGZOZ", "DİZAYN QALİBİ?"],
+            f"Detallarda hansı daha güclüdür: {car1} yoxsa {car2}?")
+    if reel_type == "satisfaction":
+        return _script(reel_type, "AVTO ASMR",
+            ["QAPI SƏSİ", "START", "DÜYMƏLƏR", "GEAR", "BU HİSSİ SEVİRSƏN?"],
+            "Maşın adamı bu səsləri başa düşür. Ən xoş səs hansıdır?", compare=False)
+    if reel_type == "what_change":
+        return _script(reel_type, "NƏYİ DƏYİŞƏRDİN?",
+            ["BU SƏNİN OLSA", "İLK MOD?", "DİSK?", "SƏS?", "ŞƏRHƏ YAZ"],
+            f"{car1} və ya {car2} sənin olsa ilk nəyi dəyişərdin?", compare=False)
+    if reel_type == "history":
+        return _script(reel_type, "NİYƏ HÖRMƏT EDİRLƏR?",
+            ["KÖKÜ", "NƏSİLLƏR", "SÜRÜŞ", "STATUS", "ADI NƏDİR?"],
+            "Bəzi maşınlara sadəcə performansa görə yox, tarixə görə hörmət edirlər. Sən razısan?", compare=False)
+    if reel_type == "surprising_fact":
+        return _script(reel_type, "GÖZLƏNMƏZ FAKT",
+            ["BUNU ÇOXU BİLMİR", "RƏQƏMƏ BAX", "HİSS BAŞQADIR", "SÜRPRİZ", "RAZISAN?"],
+            "Bəzən ən güclü görünən maşın ən ağıllı seçim olmur. Sən razısan?", compare=False)
+    if reel_type == "dream_garage":
+        return _script(reel_type, "ARZU QARAJI",
+            ["$500K BÜDCƏ", "3 MAŞIN SEÇ", "GÜNDƏLİK", "HƏFTƏSONU", "SİYAHINI YAZ"],
+            "$500K büdcən olsa qarajına hansı 3 maşını qoyardın?", compare=False)
+    if reel_type == "fail_vs_win":
+        return _script(reel_type, "UĞUR YOXSA SƏHV?",
+            ["ƏN YAXŞI DETAL", "ƏN ZƏİF DETAL", "DİZAYN", "SƏS", "SƏNİN FİKRİN?"],
+            "Bu dizayn win-dir, yoxsa fail? Sənin fikrin daha maraqlıdır.")
+    if reel_type == "real_verdict":
+        return _script(reel_type, "YEKUN QƏRAR",
+            ["MƏN OLSAYDIM", "1 SƏBƏB", "2 SƏBƏB", "3 SƏBƏB", "RAZISAN?"],
+            f"Mən olsaydım seçimimi 3 səbəblə edərdim. Sən razısan, yoxsa {car1}/{car2} arasında başqa qalib var?")
+    if reel_type == "pov_buying":
+        return _script(reel_type, "$120K SƏNDƏDİR",
+            ["PUL SƏNDƏDİR", "5", "4", "3", "TƏK BİRİNİ SEÇ"],
+            f"Sənə $120K verdim. Tək birini seç: {car1} yoxsa {car2}?")
+    return _script(reel_type, "$100K SEÇİM",
+        ["SƏNƏ $100K VERDİM", "5 SANİYƏ", "SOL?", "SAĞ?", "QƏRARINI YAZ"],
+        f"$100K səndə olsa hansını alardın: {car1} yoxsa {car2}? Qərarını şərhdə yaz.")
 
 def _search_queries(reel_type, car1="", car2=""):
     generic = list(VIDEO_QUERIES.get(reel_type, VIDEO_QUERIES["pov_decision"]))
