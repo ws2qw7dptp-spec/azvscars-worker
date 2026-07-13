@@ -61,14 +61,14 @@ def render_and_upload(sid, data, img1_path, img2_path, flip1, flip2, tmp_dir):
         "slide1_cover.png": lambda p: build_cover_slide(base, d, p),
         "slide2_power.png": lambda p: build_stat_slide(
             base, d["slide2_title"], d["slide2_car1_stat"], d["slide2_car2_stat"],
-            d["car1_name"], d["car2_name"], p),
+            d["car1_name"], d["car2_name"], p, d.get("hide_names_until_end", True)),
         "slide3_speed.png": lambda p: build_stat_slide(
             base, d["slide3_title"], d["slide3_car1_stat"], d["slide3_car2_stat"],
-            d["car1_name"], d["car2_name"], p),
+            d["car1_name"], d["car2_name"], p, d.get("hide_names_until_end", True)),
         "slide4_price.png": lambda p: build_stat_slide(
             base, d["slide4_title"], d["slide4_car1_stat"], d["slide4_car2_stat"],
-            d["car1_name"], d["car2_name"], p),
-        "slide5_outro.png": lambda p: build_outro_slide(base, p),
+            d["car1_name"], d["car2_name"], p, d.get("hide_names_until_end", True)),
+        "slide5_outro.png": lambda p: build_outro_slide(base, p, d),
     }
 
     slide_urls = {}
@@ -108,14 +108,14 @@ def render_local_slides(data, img1_path, img2_path, flip1, flip2, tmp_dir):
         "slide1_cover.png": lambda p: build_cover_slide(base, data, p),
         "slide2_power.png": lambda p: build_stat_slide(
             base, data["slide2_title"], data["slide2_car1_stat"], data["slide2_car2_stat"],
-            data["car1_name"], data["car2_name"], p),
+            data["car1_name"], data["car2_name"], p, data.get("hide_names_until_end", True)),
         "slide3_speed.png": lambda p: build_stat_slide(
             base, data["slide3_title"], data["slide3_car1_stat"], data["slide3_car2_stat"],
-            data["car1_name"], data["car2_name"], p),
+            data["car1_name"], data["car2_name"], p, data.get("hide_names_until_end", True)),
         "slide4_price.png": lambda p: build_stat_slide(
             base, data["slide4_title"], data["slide4_car1_stat"], data["slide4_car2_stat"],
-            data["car1_name"], data["car2_name"], p),
-        "slide5_outro.png": lambda p: build_outro_slide(base, p),
+            data["car1_name"], data["car2_name"], p, data.get("hide_names_until_end", True)),
+        "slide5_outro.png": lambda p: build_outro_slide(base, p, data),
     }
 
     paths = {}
