@@ -830,7 +830,7 @@ async function publishPost(media_type = 'carousel') {
     const res = await apiFetch('/api/publish/' + currentSid, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ caption: txt, media_type })
+      body: JSON.stringify({ caption: txt, media_type, force: true })
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || 'API xətası');

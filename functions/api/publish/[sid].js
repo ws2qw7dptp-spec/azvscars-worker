@@ -90,6 +90,10 @@ function validateFeedCadence(index, sid, mediaType) {
   return `Son feed post çox yenidir. Yeni paylaşım üçün ən az 4 saat ara saxlanmalıdır. Təxminən ${waitMinutes} dəqiqə sonra yenidən cəhd et.`;
 }
 
+function shouldBypassCadence(body = {}) {
+  return body.force === true || body.bypass_cadence === true || body.override_limits === true;
+}
+
 function cleanText(value) {
   return String(value || "")
     .replace(/\r/g, "")
@@ -175,7 +179,7 @@ export async function onRequestPost({ request, env, params }) {
   const media_type = body.media_type || "carousel";
   const publishKey = media_type === "story" ? `story:${body.story_file || "story1_brand.jpg"}` : media_type;
   const index = await kv.get("sessions:index", "json");
-  const cadenceError = validateFeedCadence(index, sid, media_type);
+  const cadenceError = shouldBypassCadence(body) ? null : validateFeedCadence(index, sid, media_type);
   if (cadenceError) {
     return new Response(JSON.stringify({ error: cadenceError }), {
       status: 409,

@@ -551,7 +551,7 @@ if __name__ == "__main__":
                 
                 res = requests.post(
                     url,
-                    json={"media_type": media_type},
+                    json={"media_type": media_type, "force": True},
                     headers={"X-Admin-Password": admin_pass}
                 )
                 print(f"[worker] auto_publish response: {res.status_code} {res.text}")
