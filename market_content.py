@@ -65,7 +65,7 @@ def pick_market_batch(seed, count=3):
 
 def build_market_caption(cars):
     opener = "Bakıda bu maşınlar hazırda təxminən bu qiymətə çıxır."
-    utility = "Bu reel qiymət müqayisəsi, saxlanma və paylaşım üçün hazırlanıb."
+    utility = "Qiymətləri saxla ki, real seçim vaxtı yenidən müqayisə edə biləsən."
     lines = [opener, ""]
     for car in cars:
         meta_bits = [str(car["year"]) if car.get("year") else "", car.get("engine", ""), car.get("mileage", "")]
@@ -76,8 +76,8 @@ def build_market_caption(cars):
     lines.extend([
         "",
         utility,
-        "Hansını real bazarda yaxşı deal sayırsan və niyə?",
-        "Maşın axtaran dosta göndər və reel-i yadda saxla.",
+        "Sən hansını seçərdin və niyə?",
+        "Reel-i maşın sevən dosta göndər: ikiniz də eyni maşını seçirsiniz?",
         "",
         " ".join(AZ_HASHTAGS + ["#masinqiymeti", "#turboaz", "#bakimasinbazari"]),
     ])

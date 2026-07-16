@@ -113,37 +113,37 @@ def _draw_listing(canvas, car, index, total):
     draw = ImageDraw.Draw(canvas)
     _brand_header(draw, index, total)
 
-    draw.rounded_rectangle((50, 1090, 1030, 1684), radius=48, fill=PANEL)
-    draw.rounded_rectangle((50, 1090, 1030, 1684), radius=48, outline=HAIRLINE, width=2)
-    draw.rounded_rectangle((82, 1130, 312, 1182), radius=26, fill=(45, 51, 61))
-    draw.ellipse((102, 1146, 114, 1158), fill=ORANGE)
-    draw.text((132, 1156), "REAL BAZAR QIYMƏTİ", font=_font(FONT_CONDENSED, 24), fill=(226, 229, 234), anchor="lm")
+    draw.rounded_rectangle((38, 1060, 1042, 1712), radius=52, fill=PANEL)
+    draw.rounded_rectangle((38, 1060, 1042, 1712), radius=52, outline=HAIRLINE, width=2)
+    draw.rounded_rectangle((76, 1100, 316, 1156), radius=28, fill=(45, 51, 61))
+    draw.ellipse((98, 1118, 112, 1132), fill=ORANGE)
+    draw.text((132, 1128), "REAL BAZAR QİYMƏTİ", font=_font(FONT_CONDENSED, 24), fill=(226, 229, 234), anchor="lm")
 
     name = car["name"].upper()
     name_font = _fit(draw, name, FONT_DISPLAY, 88, 900, min_size=52)
-    draw.text((82, 1220), name, font=name_font, fill=IVORY, anchor="la")
+    draw.text((76, 1190), name, font=name_font, fill=IVORY, anchor="la")
 
-    draw.line((82, 1338, 998, 1338), fill=(255, 255, 255, 28), width=2)
-    draw.text((82, 1392), "BAKI ÜZRƏ TƏXMİNİ QİYMƏT", font=_font(FONT_CONDENSED, 28), fill=MUTED, anchor="la")
+    draw.line((76, 1312, 1004, 1312), fill=(255, 255, 255, 28), width=2)
+    draw.text((76, 1362), "BAKI ÜZRƏ TƏXMİNİ QİYMƏT", font=_font(FONT_CONDENSED, 28), fill=MUTED, anchor="la")
     price_font = _fit(draw, car["price_label"], FONT_BOLD, 78, 870, min_size=52)
-    draw.text((82, 1450), car["price_label"], font=price_font, fill=WHITE, anchor="la")
-    draw.rounded_rectangle((82, 1548, 998, 1634), radius=28, fill=PANEL_2)
+    draw.text((76, 1418), car["price_label"], font=price_font, fill=WHITE, anchor="la")
+    draw.rounded_rectangle((76, 1510, 1004, 1658), radius=32, fill=PANEL_2)
 
     specs = [
         str(car.get("year") or ""),
         car.get("engine", ""),
         car.get("mileage", ""),
     ]
-    x_positions = (118, 442, 746)
+    x_positions = (114, 430, 728)
     labels = ("İL", "MÜHƏRRİK", "YÜRÜŞ")
     for x, label, value in zip(x_positions, labels, specs):
-        draw.text((x, 1571), label, font=_font(FONT_CONDENSED, 20), fill=MUTED, anchor="la")
-        value_font = _fit(draw, value, FONT_BOLD, 28, 230, min_size=20)
-        draw.text((x, 1605), value, font=value_font, fill=IVORY, anchor="la")
+        draw.text((x, 1542), label, font=_font(FONT_CONDENSED, 21), fill=MUTED, anchor="la")
+        value_font = _fit(draw, value, FONT_BOLD, 29, 250, min_size=20)
+        draw.text((x, 1603), value, font=value_font, fill=IVORY, anchor="la")
 
-    draw.text((82, 1750), "SAXLA", font=_font(FONT_BOLD, 27), fill=RED, anchor="la")
-    draw.text((201, 1750), "qiyməti sonra müqayisə et", font=_font(FONT_REGULAR, 27), fill=(208, 213, 221), anchor="la")
-    draw.text((998, 1750), "@azvscars", font=_font(FONT_CONDENSED, 30), fill=MUTED, anchor="ra")
+    draw.text((76, 1774), "SAXLA", font=_font(FONT_BOLD, 27), fill=RED, anchor="la")
+    draw.text((196, 1774), "real bazarda müqayisə et", font=_font(FONT_REGULAR, 27), fill=(208, 213, 221), anchor="la")
+    draw.text((1004, 1774), "@azvscars", font=_font(FONT_CONDENSED, 30), fill=MUTED, anchor="ra")
     return _add_grain(canvas, f"{car['name']}:{index}", opacity=7)
 
 
@@ -174,8 +174,9 @@ def _draw_compare_slide(out_path, cars):
         draw.text((106, y + 192), detail, font=detail_font, fill=MUTED, anchor="la")
         y += 278
 
-    draw.text((64, 1582), "DOSTUNA GÖNDƏR", font=_font(FONT_BOLD, 28), fill=RED, anchor="la")
-    draw.text((390, 1582), "maşın axtarırsa, bu qiymətlər işinə yarayar", font=_font(FONT_REGULAR, 26), fill=(205, 211, 219), anchor="la")
+    social_cta = "DOSTUNA GÖNDƏR: İKİNİZ DƏ EYNİ MAŞINI SEÇİRSİNİZ?"
+    social_font = _fit(draw, social_cta, FONT_BOLD, 31, 940, min_size=23)
+    draw.text((64, 1582), social_cta, font=social_font, fill=RED, anchor="la")
     draw.text((64, 1730), "@azvscars", font=_font(FONT_CONDENSED, 34), fill=MUTED, anchor="la")
     canvas.save(out_path, quality=96)
 
@@ -197,11 +198,12 @@ def _draw_outro_slide(out_path, cars):
 
     draw.line((72, 1070, 1008, 1070), fill=(255, 255, 255, 42), width=2)
     draw.text((72, 1142), "BU GÜNÜN SƏNƏ FAYDASI OLDUSA:", font=_font(FONT_CONDENSED, 32), fill=MUTED, anchor="la")
-    actions = (("01", "SAXLA"), ("02", "PAYLAŞ"), ("03", "FİKRİNİ YAZ"))
+    actions = (("01", "BİRİNİ SEÇ"), ("02", "DOSTUNA GÖNDƏR"), ("03", "CAVABI MÜQAYİSƏ ET"))
     y = 1244
     for number, label in actions:
         draw.text((76, y), number, font=_font(FONT_BOLD, 29), fill=ORANGE, anchor="la")
-        draw.text((178, y), label, font=_font(FONT_DISPLAY, 58), fill=IVORY, anchor="la")
+        action_font = _fit(draw, label, FONT_DISPLAY, 58, 790, min_size=38)
+        draw.text((178, y), label, font=action_font, fill=IVORY, anchor="la")
         y += 112
     draw.text((72, 1732), "@azvscars", font=_font(FONT_CONDENSED, 42), fill=MUTED, anchor="la")
     canvas.save(out_path, quality=96)
