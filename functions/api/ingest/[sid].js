@@ -81,6 +81,20 @@ export async function onRequestPost({ request, env, params }) {
 
     await kv.put(`session:${sid}`, JSON.stringify(meta));
 
+    if (Array.isArray(meta.source_assets) && meta.source_assets.length) {
+      let assetHistory = await kv.get("assets:recent", "json");
+      if (!Array.isArray(assetHistory)) assetHistory = [];
+      const incomingUrls = new Set(meta.source_assets.map(item => item?.url).filter(Boolean));
+      const incomingHashes = new Set(meta.source_assets.map(item => item?.fingerprint).filter(Boolean));
+      assetHistory = assetHistory.filter(item => (
+        item && !incomingUrls.has(item.url) && !incomingHashes.has(item.fingerprint)
+      ));
+      await kv.put(
+        "assets:recent",
+        JSON.stringify([...meta.source_assets, ...assetHistory].slice(0, 120)),
+      );
+    }
+
     let index = await kv.get("sessions:index", "json");
     if (!Array.isArray(index)) index = [];
     index = index.filter(s => s.sid !== sid);
