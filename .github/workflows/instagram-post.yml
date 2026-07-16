@@ -6,14 +6,10 @@ concurrency:
 
 on:
   schedule:
-    # 09:00 AZT -> 05:00 UTC (Sürücü Seçimi)
+    # 09:00 AZT -> 05:00 UTC (Daily Debate Reel)
     - cron: "0 5 * * *"
-    # 13:00 AZT -> 09:00 UTC (Real Avto Döyüş)
-    - cron: "0 9 * * *"
-    # 19:30 AZT -> 15:30 UTC (Şərh Savaşı)
+    # 19:30 AZT -> 15:30 UTC (alternates Market Reel / Crazy Cars Reel)
     - cron: "30 15 * * *"
-    # 22:45 AZT -> 18:45 UTC (Gecə Döyüşü)
-    - cron: "45 18 * * *"
 
   workflow_dispatch:
     inputs:
@@ -25,6 +21,7 @@ on:
         options:
           - quick
           - main
+          - market
           - war
           - night
           - cinematic
@@ -34,19 +31,29 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_KV_NAMESPACE_ID: ${{ secrets.CF_KV_NAMESPACE_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+      META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+      INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
       ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
       PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
       INGEST_VIA_PAGES: "true"
       PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: 'pip'
@@ -59,12 +66,13 @@ jobs:
           else
             if [[ "${{ github.event.schedule }}" == "0 5 * * *" ]]; then
               echo "POST_TYPE=quick" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "0 9 * * *" ]]; then
-              echo "POST_TYPE=main" >> "$GITHUB_ENV"
             elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
-              echo "POST_TYPE=war" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "45 18 * * *" ]]; then
-              echo "POST_TYPE=cinematic" >> "$GITHUB_ENV"
+              DOW="$(TZ=Asia/Baku date +%u)"
+              if [[ "$DOW" == "1" || "$DOW" == "3" || "$DOW" == "5" || "$DOW" == "7" ]]; then
+                echo "POST_TYPE=market" >> "$GITHUB_ENV"
+              else
+                echo "POST_TYPE=cinematic" >> "$GITHUB_ENV"
+              fi
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
             fi
@@ -86,13 +94,9 @@ jobs:
       - name: Run Automated Post
         run: |
           SID="auto$(date +%Y%m%d%H%M%S)"
-          MAKE_REEL="false"
-          if [[ "$POST_TYPE" == "quick" || "$POST_TYPE" == "war" || "$POST_TYPE" == "night" || "$POST_TYPE" == "cinematic" ]]; then
-            MAKE_REEL="true"
-          fi
           python worker.py \
             --action generate \
             --sid "$SID" \
             --post_type "$POST_TYPE" \
-            --make_reel "$MAKE_REEL" \
+            --make_reel "true" \
             --auto_publish true
