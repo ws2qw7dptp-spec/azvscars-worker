@@ -21,6 +21,8 @@ The cars do not always need to be exact same-class twins, but they must be reali
 Good examples: BYD Seal vs Mercedes-Benz C-Class, Zeekr 001 vs Mercedes EQE, NIO ET5 vs BMW i4, Li Auto L9 vs Mercedes GLE, Tesla Model 3 Performance vs BMW M3, Toyota Land Cruiser vs Mercedes G-Class, Lexus LX vs Range Rover, old C63 V8 vs new C63 hybrid, Mustang GT vs BMW M4, Hyundai Ioniq 5 N vs Volkswagen Golf R.
 Avoid boring random pairings that will not create comments.
 Vary the pairs every time. Provide ONLY accurate, real-world specs.
+- Slide 4 must be a realistic Azerbaijan/Baku market-style price in AZN, not USD.
+- Caption should be optimized for Instagram growth signals: comments, likes, shares, saves, and follows.
 
 Output ONLY valid JSON, absolutely no other text:
 {
@@ -35,9 +37,9 @@ Output ONLY valid JSON, absolutely no other text:
   "slide3_title": "0-100 KM/S",
   "slide3_car1_stat": "3.8 san.",
   "slide3_car2_stat": "3.9 san.",
-  "slide4_title": "BAŞLANĞIC QİYMƏTİ",
-  "slide4_car1_stat": "$76,000",
-  "slide4_car2_stat": "$83,000",
+  "slide4_title": "BAKI QİYMƏTİ",
+  "slide4_car1_stat": "129 000 AZN",
+  "slide4_car2_stat": "141 000 AZN",
   "caption": "2-3 sentences in natural Azerbaijani comparing these two cars with emojis.",
   "hashtags": "#azvscars #azerbaijan #avto #baku #masin"
 }
@@ -492,13 +494,15 @@ def generate_comparison(post_type="main") -> dict:
     
     # Customize instructions based on post_type
     if post_type == "quick":
-        post_instruction = "POST TYPE: 'Sürücü Seçimi'. Pick a controversial owner-tribe matchup. Caption must ask which car they would drive and include a short follow CTA in Azerbaijani."
+        post_instruction = "POST TYPE: 'Sürücü Seçimi'. Pick a controversial owner-tribe matchup. Caption must drive fast comments and tags, ask which car they would drive, make them explain why, and include a short follow CTA in Azerbaijani."
     elif post_type == "war":
-        post_instruction = "POST TYPE: 'Şərh Savaşı'. Pick a pair that splits car owners into two sides. Caption must ask sol yoxsa sağ and include 'bizi izlə' naturally."
+        post_instruction = "POST TYPE: 'Şərh Savaşı'. Pick a pair that splits car owners into two sides. Caption must drive comment wars and shares, ask for a real reason not a one-word answer, and include 'bizi izlə' naturally."
     elif post_type == "night":
-        post_instruction = "POST TYPE: 'Gecə Döyüşü'. Pick aggressive cars with fanbases. Caption must ask which key they would take at night in Baku and ask for a comment."
+        post_instruction = "POST TYPE: 'Gecə Döyüşü'. Pick aggressive cars with fanbases. Caption must chase likes and shares, ask which key they would take at night in Baku, and ask for a comment."
+    elif post_type == "cinematic":
+        post_instruction = "POST TYPE: 'Crazy Cars Episode Reel'. Do NOT make this a normal comparison. Pick one crazy car topic built on obsession, shock, sound, wild modification, expensive mistake, dream garage energy, or supercar trivia. Caption must create curiosity, comments, saves, shares, and make people want tomorrow's episode."
     else:
-        post_instruction = "POST TYPE: 'Real Avto Döyüş'. Pick a debate-driven matchup with owner loyalty. Caption must compare briefly and ask what matters more: marka, texnologiya, etibarlılıq or sürüş hissi."
+        post_instruction = "POST TYPE: 'Real Avto Döyüş'. Pick a debate-driven matchup with owner loyalty. Caption must be useful enough for saves, compare briefly, and ask what matters more: marka, texnologiya, etibarlılıq or sürüş hissi, with a reason."
     
     prompt_content = f"Generate a new, random car comparison. Random Seed: {seed}.\n{post_instruction}\nReturn ONLY the JSON object, no explanation."
     

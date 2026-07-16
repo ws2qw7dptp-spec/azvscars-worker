@@ -36,6 +36,7 @@ export async function onRequestGet({ request, env, params }) {
 
   return new Response(JSON.stringify({
     sid: sid,
+    post_type: meta.post_type || "",
     car1_name: meta.car1_name || "Avtomobil 1",
     car2_name: meta.car2_name || "Avtomobil 2",
     flip1: meta.flip1 || false,
@@ -48,6 +49,7 @@ export async function onRequestGet({ request, env, params }) {
     is_published: Boolean(carousel_published || reel_published),
     carousel_published,
     reel_published,
+    publish_strategy: meta.publish_strategy || null,
   }), { headers: { "Content-Type": "application/json" } });
 }
 

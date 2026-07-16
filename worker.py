@@ -173,7 +173,84 @@ def maybe_publish_post_story_reminder(sid, admin_pass):
 
 # ─── Generate Action ─────────────────────────────────────────────────────────
 
-def action_cinematic_generate(sid, mark_done=True):
+def action_market_generate(sid, mark_done=True):
+    from image_fetcher import fetch_wikipedia_image
+    from market_content import build_market_alt_text, build_market_caption, pick_market_batch
+    from market_reel_renderer import render_market_slides
+    import reel_renderer
+
+    set_status(sid, "running", "💸 Bakı bazarı reel-i üçün maşınlar seçilir…")
+    cars = pick_market_batch(sid, count=3)
+    use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        image_paths = []
+        for idx, car in enumerate(cars, start=1):
+            set_status(sid, "running", f"🖼 {car['name']} şəkli hazırlanır…")
+            image_paths.append(fetch_wikipedia_image(car["search_query"], os.path.join(tmp, f"market_{idx}.jpg")))
+
+        set_status(sid, "running", "🎨 Market slaydları hazırlanır…")
+        render_market_slides(cars, image_paths, tmp)
+        slide_urls = {
+            filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
+            for filename in SLIDE_KEYS
+        }
+
+        set_status(sid, "running", "🎬 Market reel render edilir…")
+        local_reel = os.path.join(tmp, "reel.mp4")
+        reel_renderer.render_reel([os.path.join(tmp, key) for key in SLIDE_KEYS], local_reel, slide_duration_sec=1.8)
+        reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
+
+        caption = build_market_caption(cars)
+        alt_text = build_market_alt_text(cars)
+        meta = {
+            "sid": sid,
+            "post_type": "market",
+            "content_series": "baku_market",
+            "car1_name": cars[0]["name"],
+            "car2_name": cars[1]["name"] if len(cars) > 1 else "Baku bazarı",
+            "caption": caption,
+            "alt_text": alt_text,
+            "image_description": alt_text,
+            "data": {
+                "market_cars": cars,
+                "battle_title": "BAKI QİYMƏT CHECK",
+                "slide2_car1_stat": cars[0]["price_label"],
+                "slide2_car2_stat": cars[1]["price_label"] if len(cars) > 1 else "",
+                "slide3_car1_stat": cars[0]["mileage"],
+                "slide3_car2_stat": cars[1]["mileage"] if len(cars) > 1 else "",
+                "slide4_car1_stat": cars[2]["price_label"] if len(cars) > 2 else cars[0]["price_label"],
+                "slide4_car2_stat": cars[2]["mileage"] if len(cars) > 2 else cars[0]["mileage"],
+            },
+            "publish_strategy": {
+                "pillar": "market_utility",
+                "engagement_focus": "Saxlanma, paylaşım və real bazar müzakirəsi",
+                "cta_focus": "Maşın axtaran dosta göndər və reel-i yadda saxla.",
+            },
+            "slide_urls": slide_urls,
+            "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
+            "created_at": time.strftime("%Y-%m-%d %H:%M"),
+            "is_published": False,
+        }
+
+        if use_pages_ingest:
+            files = {
+                "reel.mp4": _file_payload(local_reel, "video/mp4"),
+            }
+            for idx, image_path in enumerate(image_paths, start=1):
+                files[f"market_{idx}.jpg"] = _file_payload(image_path, "image/jpeg")
+            for filename in SLIDE_KEYS:
+                files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
+            set_status(sid, "running", "☁️ Market media Cloudflare Pages-ə göndərilir…")
+            ingest_to_pages(sid, meta, files)
+        else:
+            cf.session_save(sid, meta)
+
+    if mark_done:
+        set_status(sid, "done", "✅ Market reel hazırdır!")
+    print(f"[market] Done. sid={sid}")
+
+def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
     from ai_comparison import generate_comparison
     from image_fetcher import fetch_wikipedia_image
     from video_sound_fetcher import choose_reel_type, cinematic_script, download_cinematic_assets
@@ -181,7 +258,7 @@ def action_cinematic_generate(sid, mark_done=True):
 
     set_status(sid, "running", "🎬 Cinematic reel üçün mövzu hazırlanır…")
     data = generate_comparison(post_type="night")
-    reel_type = choose_reel_type(sid)
+    reel_type = choose_reel_type(sid, mode=mode)
     script = cinematic_script(reel_type, data["car1_name"], data["car2_name"])
     data = apply_publish_quality(data, post_type="cinematic", media_type="reel")
     use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
@@ -226,6 +303,7 @@ def action_cinematic_generate(sid, mark_done=True):
         meta = {
             "sid": sid,
             "post_type": "cinematic",
+            "content_series": "crazy_cars" if mode == "crazy" else "cinematic",
             "cinematic_type": reel_type,
             "car1_name": data["car1_name"],
             "car2_name": data["car2_name"],
@@ -269,9 +347,12 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
     import reel_renderer
 
     try:
+        if post_type == "market":
+            return action_market_generate(sid, mark_done=mark_done)
+
         if post_type == "cinematic":
             try:
-                return action_cinematic_generate(sid, mark_done=mark_done)
+                return action_cinematic_generate(sid, mark_done=mark_done, mode="crazy")
             except Exception as cinematic_error:
                 print(f"[cinematic] fallback to night VS reel: {cinematic_error}")
                 set_status(sid, "running", "⚠️ Cinematic media tapılmadı, gecə VS reel fallback işə düşdü…")

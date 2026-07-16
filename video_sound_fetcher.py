@@ -72,6 +72,16 @@ REEL_TYPES = [
     "real_verdict",
 ]
 
+CRAZY_REEL_TYPES = [
+    "supercar_facts",
+    "expensive_mistakes",
+    "guess_the_car",
+    "surprising_fact",
+    "dream_garage",
+    "satisfaction",
+    "what_change",
+]
+
 COMPARISON_REEL_TYPES = {
     "sound_battle",
     "owner_experience",
@@ -91,10 +101,12 @@ def _seeded_choice(items, seed):
     return items[int(digest[:8], 16) % len(items)]
 
 
-def choose_reel_type(seed: str) -> str:
+def choose_reel_type(seed: str, mode: str = "mixed") -> str:
     override = os.environ.get("CINEMATIC_REEL_TYPE", "").strip()
     if override in REEL_TYPES:
         return override
+    if mode == "crazy":
+        return _seeded_choice(CRAZY_REEL_TYPES, seed)
     return _seeded_choice(REEL_TYPES, seed)
 
 
@@ -105,6 +117,7 @@ def _script(reel_type, title, cues, caption, compare=None):
         "cues": cues,
         "caption": caption,
         "is_comparison": is_comparison,
+        "theme": "crazy" if not is_comparison else "versus",
         "mystery_label": "ADI NƏDİR?",
         "hook_rule": "Do not reveal car names before the final reveal card.",
     }
@@ -130,15 +143,15 @@ def cinematic_script(reel_type, car1, car2):
     if reel_type == "guess_the_car":
         return _script(reel_type, "HANSI MAŞINDIR?",
             ["FƏRƏLƏRƏ BAX", "SƏSİ DİNLƏ", "SALONU TANIDIN?", "3...2...1", "ADI NƏDİR?"],
-            "Səsi və detalları tanıdın? Maşını şərhdə yaz, sonra cavabı yoxla.", compare=False)
+            "Səsi və detalları tanıdın? Maşını şərhdə yaz, sabah cavab və yeni maşın gəlir.", compare=False)
     if reel_type == "supercar_facts":
-        return _script(reel_type, "5 SƏRT FAKT",
-            ["1 FAKT", "2 FAKT", "3 FAKT", "4 FAKT", "ADI NƏDİR?"],
-            "Supercar dünyasında rəqəmlərdən də maraqlı detallar var. Hansı fakt səni təəccübləndirdi?", compare=False)
+        return _script(reel_type, "DƏLİ MAŞIN FAKTLARI",
+            ["1 ŞOK FAKT", "2 ŞOK FAKT", "BU NORMAL DEYİL", "BUNU GÖRDÜN?", "ADI NƏDİR?"],
+            "Bəzi maşınlar artıq avtomobil yox, dəlilik layihəsidir. Hansı detal səni saxladı?", compare=False)
     if reel_type == "expensive_mistakes":
-        return _script(reel_type, "BAHALI SƏHVLƏR",
-            ["ALMAMIŞDAN ƏVVƏL", "SERVİSİ YOXLAT", "TARİXÇƏ VACİBDİR", "SƏSƏ ALDANMA", "BUNU SAXLA"],
-            "Bahalı maşın alanda ən böyük səhv təkcə qiymətə baxmaqdır. Hansı səhvi ən çox görmüsən?", compare=False)
+        return _script(reel_type, "DƏLİ MAŞIN SƏHVLƏRİ",
+            ["ALMAMIŞDAN ƏVVƏL", "BU SƏSƏ ALDANMA", "SERVİS BOMBASI", "PULU YANDIRIR", "BUNU SAXLA"],
+            "Bəzi çılğın maşınlar showroom-da xəyal, servisdə kabus olur. Ən böyük səhv hansıdır?", compare=False)
     if reel_type == "which_buy":
         return _script(reel_type, "HANSINI ALARDIN?",
             ["$30K", "$50K", "$80K", "$150K", "QƏRARINI YAZ"],
@@ -160,25 +173,25 @@ def cinematic_script(reel_type, car1, car2):
             ["FƏRƏLƏR", "DİSKLƏR", "ARXA İŞIQLAR", "EGZOZ", "DİZAYN QALİBİ?"],
             f"Detallarda hansı daha güclüdür: {car1} yoxsa {car2}?")
     if reel_type == "satisfaction":
-        return _script(reel_type, "AVTO ASMR",
-            ["QAPI SƏSİ", "START", "DÜYMƏLƏR", "GEAR", "BU HİSSİ SEVİRSƏN?"],
-            "Maşın adamı bu səsləri başa düşür. Ən xoş səs hansıdır?", compare=False)
+        return _script(reel_type, "DƏLİ MAŞIN ASMR",
+            ["QAPI SƏSİ", "START", "REV", "DETAL", "BU HİSSİ SEVİRSƏN?"],
+            "Bu artıq normal maşın contenti deyil. Ən çox hansı detalı bir də izlədin?", compare=False)
     if reel_type == "what_change":
-        return _script(reel_type, "NƏYİ DƏYİŞƏRDİN?",
-            ["BU SƏNİN OLSA", "İLK MOD?", "DİSK?", "SƏS?", "ŞƏRHƏ YAZ"],
-            f"{car1} və ya {car2} sənin olsa ilk nəyi dəyişərdin?", compare=False)
+        return _script(reel_type, "BU DƏLİDƏ NƏYİ DƏYİŞƏRDİN?",
+            ["BU SƏNİN OLSA", "İLK MOD?", "AERODİNAMİKA?", "SƏS?", "ŞƏRHƏ YAZ"],
+            "Bu maşın sənin olsa ilk nəyi dəyişərdin? Səbəbi ilə yaz.", compare=False)
     if reel_type == "history":
         return _script(reel_type, "NİYƏ HÖRMƏT EDİRLƏR?",
             ["KÖKÜ", "NƏSİLLƏR", "SÜRÜŞ", "STATUS", "ADI NƏDİR?"],
             "Bəzi maşınlara sadəcə performansa görə yox, tarixə görə hörmət edirlər. Sən razısan?", compare=False)
     if reel_type == "surprising_fact":
-        return _script(reel_type, "GÖZLƏNMƏZ FAKT",
-            ["BUNU ÇOXU BİLMİR", "RƏQƏMƏ BAX", "HİSS BAŞQADIR", "SÜRPRİZ", "RAZISAN?"],
-            "Bəzən ən güclü görünən maşın ən ağıllı seçim olmur. Sən razısan?", compare=False)
+        return _script(reel_type, "DƏLİ MAŞIN SÜRPRİZİ",
+            ["BUNU ÇOXU BİLMİR", "RƏQƏMƏ BAX", "BU HİSSƏ BAX", "SÜRPRİZ", "RAZISAN?"],
+            "Bu maşınla bağlı ən dəlisi gücü deyil. Hansı detal səni daha çox təəccübləndirdi?", compare=False)
     if reel_type == "dream_garage":
-        return _script(reel_type, "ARZU QARAJI",
-            ["$500K BÜDCƏ", "3 MAŞIN SEÇ", "GÜNDƏLİK", "HƏFTƏSONU", "SİYAHINI YAZ"],
-            "$500K büdcən olsa qarajına hansı 3 maşını qoyardın?", compare=False)
+        return _script(reel_type, "DƏLİ QARAJ",
+            ["$500K BÜDCƏ", "1 DƏLİ MAŞIN", "1 GÜNDƏLİK", "1 ŞOU", "SİYAHINI YAZ"],
+            "$500K büdcən olsa qarajına hansı dəlilik maşınını qoyardın? Səbəbi ilə yaz.", compare=False)
     if reel_type == "fail_vs_win":
         return _script(reel_type, "UĞUR YOXSA SƏHV?",
             ["ƏN YAXŞI DETAL", "ƏN ZƏİF DETAL", "DİZAYN", "SƏS", "SƏNİN FİKRİN?"],

@@ -498,30 +498,20 @@ body {
   <!-- Schedule Tracker -->
   <div class="tracker-card" id="scheduleTracker">
     <div class="tracker-hdr">
-      <div class="tracker-title">📅 Bugünkü Plan — 4 Feed + 3 Story Run</div>
+      <div class="tracker-title">📅 Bugünkü Plan — 1 Debate Reel + 1 Crazy Cars Reel + 3 Story Run</div>
       <button class="btn-autopilot" id="autopilotBtn" onclick="startAutopilot()">
-        🚀 Autopilot Başlat
+        🚀 Növbəti Slotu İşə Sal
       </button>
     </div>
     <div class="tracker-grid">
       <div class="track-item" id="track-quick">
-        <div class="track-time">⚡ 09:00-09:25</div>
-        <div class="track-name">Sürücü Seçimi</div>
-        <div class="track-status">⏳ Gözləyir</div>
-      </div>
-      <div class="track-item" id="track-main">
-        <div class="track-time">🔥 13:00-13:25</div>
-        <div class="track-name">Real Avto Döyüş</div>
+        <div class="track-time">⚡ 07:00-08:00</div>
+        <div class="track-name">Sürücü Seçimi · Şərh/Tag</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-war">
-        <div class="track-time">💬 19:30-19:55</div>
-        <div class="track-name">Şərh Savaşı</div>
-        <div class="track-status">⏳ Gözləyir</div>
-      </div>
-      <div class="track-item" id="track-cinematic">
-        <div class="track-time">🌙 22:45-23:10</div>
-        <div class="track-name">Cinematic Reel</div>
+        <div class="track-time">🔥 20:00-21:00</div>
+        <div class="track-name">Crazy Cars · Növbəti Seriya</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-morning">
@@ -545,18 +535,18 @@ body {
   <div class="system-grid">
     <div class="system-card">
       <div class="system-kicker">Feed</div>
-      <div class="system-value">4 / gün</div>
-      <div class="system-note">Təbii random vaxt pəncərələri</div>
+      <div class="system-value">2 / gün</div>
+      <div class="system-note">Minimum 4 saat ara ilə, reach cannibalization olmadan</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">Reel</div>
-      <div class="system-value">3 / gün</div>
-      <div class="system-note">Quick, War, Cinematic</div>
+      <div class="system-value">Strategik</div>
+      <div class="system-note">Quick = debate, Cinematic = crazy cars, Main/War = manual variants</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">Story</div>
       <div class="system-value">3 run / gün</div>
-      <div class="system-note">+ postdan sonra reminder story</div>
+      <div class="system-note">Feed postlarını dəstəkləyən poll və reminder story-lər</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">R2 Storage</div>
@@ -570,27 +560,22 @@ body {
     <div class="gen-card-accent"></div>
     <div>
       <div class="gen-label">⚡ Yeni Post</div>
-      <div class="gen-title">Instagram Avto Döyüşü Yarat</div>
-      <div class="gen-sub">AI tərəf yaradan maşın duelləri seçir, karusel və reel hazırlayır.</div>
+      <div class="gen-title">Instagram Reel Yarat</div>
+      <div class="gen-sub">Feed məzmunu artıq reels-first işləyir və hər post şərh, paylaşım, save və follow məqsədinə görə optimizasiya olunur.</div>
     </div>
     <div class="gen-controls">
       <select id="postTypeSelect" class="styled-select">
-        <option value="main">🔥 13:00 — Real Avto Döyüş</option>
-        <option value="quick">⚡ 09:00 — Sürücü Seçimi</option>
-        <option value="war">💬 19:30 — Şərh Savaşı</option>
-        <option value="night">🌙 Manual — Gecə Döyüşü</option>
-        <option value="cinematic">🏎 22:45 — Cinematic Reel</option>
+        <option value="quick">⚡ 07:00 — Sürücü Seçimi · Şərh/Tag</option>
+        <option value="cinematic">🔥 20:00 — Crazy Cars Reel · Episode</option>
+        <option value="market">💸 Manual — Baku Market Reel · Save/Share</option>
+        <option value="war">💬 Manual — Şərh Savaşı · Share War</option>
+        <option value="night">🌙 Manual — Gecə Döyüşü · Like/Share</option>
+        <option value="main">🏷 Manual — Real Avto Döyüş · Save/Share</option>
       </select>
-
-      <label class="reel-toggle">
-        <input type="checkbox" id="makeReelToggle">
-        <span class="reel-toggle-knob"></span>
-        🎬 Reel
-      </label>
 
       <button class="gen-btn" id="genBtn" onclick="startGenerate()">
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3z"/></svg>
-        Yarat
+        Reel Yarat
       </button>
     </div>
   </div>
@@ -604,7 +589,7 @@ body {
   <!-- Preview Section -->
   <div class="preview-section" id="previewSection" style="display:none">
     <div class="section-hdr">
-      <h2>Post Önizləməsi</h2>
+      <h2>Reel Önizləməsi</h2>
       <span class="chip" id="sessionBadge">—</span>
     </div>
 
@@ -702,11 +687,10 @@ async function startGenerate() {
 
   try {
     const postType = document.getElementById('postTypeSelect').value;
-    const makeReel = document.getElementById('makeReelToggle').checked;
     const res = await apiFetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_type: postType, make_reel: makeReel })
+      body: JSON.stringify({ post_type: postType, make_reel: true })
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || 'Xəta baş verdi');
@@ -784,17 +768,14 @@ async function loadSession(sid) {
 
   updateFlipBtns(d.flip1, d.flip2, d.car1_name, d.car2_name);
   document.getElementById('captionText').value = d.caption;
-  document.getElementById('altText').value = d.alt_text || d.image_description || '';
+  document.getElementById('altText').value = [
+    d.alt_text || d.image_description || '',
+    d.publish_strategy?.engagement_focus ? `Strategiya: ${d.publish_strategy.engagement_focus}` : ''
+  ].filter(Boolean).join('\n\n');
 
   const pubBtn = document.getElementById('publishBtn');
   const pubReelBtn = document.getElementById('publishReelBtn');
-  if (d.carousel_published) {
-    pubBtn.disabled = true;
-    pubBtn.textContent = '✅ Karusel Paylaşılıb';
-  } else {
-    pubBtn.disabled = false;
-    pubBtn.textContent = '📸 Karusel Paylaş';
-  }
+  pubBtn.style.display = 'none';
 
   if (d.reel_url) {
     pubReelBtn.style.display = 'inline-flex';
@@ -885,10 +866,8 @@ async function deletePost() {
 // ── History & Tracking ────────────────────────────────────────────────────────
 let todayHistory = [];
 const DAILY_POST_PLAN = [
-  { type: 'quick', label: '09:00-09:25 Tez Seçim' },
-  { type: 'main', label: '13:00-13:25 Əsas Duel' },
-  { type: 'war', label: '19:30-19:55 Şərh Savaşı' },
-  { type: 'cinematic', label: '22:45-23:10 Cinematic Reel' },
+  { type: 'quick', label: '07:00-08:00 Sürücü Seçimi' },
+  { type: 'cinematic', label: '20:00-21:00 Crazy Cars Reel' },
 ];
 const DAILY_STORY_PLAN = [
   { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45-09:00 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
@@ -898,10 +877,11 @@ const DAILY_STORY_PLAN = [
 const DAILY_PLAN = [...DAILY_POST_PLAN, ...DAILY_STORY_PLAN];
 const POST_TYPE_LABELS = {
   quick: 'TEZ SEÇİM',
-  main: 'VS MÜQAYİSƏ',
-  war: 'ŞƏRH SAVAŞI',
-  night: 'GECƏ DÖYÜŞÜ',
-  cinematic: 'CINEMATIC REEL',
+  main: 'SAVE/SHARE REEL',
+  war: 'ŞƏRH SAVAŞI REEL',
+  night: 'GECƏ REELİ',
+  cinematic: 'CRAZY CARS REEL',
+  market: 'BAKU MARKET REEL',
   stories: 'STORY',
 };
 
@@ -982,7 +962,7 @@ function updateTracker(items) {
     btn.textContent = '✅ Bugünkü Plan Tamamlanıb';
   } else {
     btn.disabled = false;
-    btn.textContent = '🚀 Autopilot Başlat';
+    btn.textContent = '🚀 Növbəti Slotu İşə Sal';
   }
 }
 
@@ -990,7 +970,7 @@ function updateTracker(items) {
 async function startAutopilot() {
   const btn = document.getElementById('autopilotBtn');
   btn.disabled = true;
-  btn.textContent = '🚀 Autopilot İşləyir...';
+  btn.textContent = '🚀 Slot İşləyir...';
   
   // Find first missing post
   let missingType = null;
@@ -1009,7 +989,7 @@ async function startAutopilot() {
   }
   
   const planItem = DAILY_PLAN.find(item => item.type === missingType);
-  showStatus(`🤖 Autopilot: ${(planItem?.label || missingType)} yaradılır və paylaşılır...`, true);
+  showStatus(`🤖 ${(planItem?.label || missingType)} yaradılır və paylaşılır...`, true);
   
   try {
     const res = await apiFetch('/api/generate', {
@@ -1017,7 +997,7 @@ async function startAutopilot() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         post_type: planItem.postType || missingType,
-        make_reel: !planItem.postType && missingType !== 'main',
+        make_reel: true,
         auto_publish: true,
         story_slot: planItem.storySlot || 'all',
         story_files: planItem.files || '',
@@ -1029,9 +1009,9 @@ async function startAutopilot() {
     // Custom poll loop for autopilot
     pollAutopilotStatus(d.sid);
   } catch(e) {
-    showStatus('❌ Autopilot xətası: ' + e.message, false);
+    showStatus('❌ Slot xətası: ' + e.message, false);
     btn.disabled = false;
-    btn.textContent = '🚀 Autopilot Başlat (Yenidən Cəhd Et)';
+    btn.textContent = '🚀 Növbəti Slotu İşə Sal';
   }
 }
 
@@ -1050,26 +1030,22 @@ function pollAutopilotStatus(sid) {
     try {
       const res = await apiFetch('/api/status/' + sid);
       const d = await res.json();
-      showStatus(`🤖 Autopilot İşləyir: ` + d.message, d.status === 'running');
+      showStatus(`🤖 Slot işləyir: ` + d.message, d.status === 'running');
       if (d.status === 'done') {
         clearInterval(interval);
         hideStatus();
-        toast('✅ Autopilot postu hazırladı və paylaşdı!', 'success');
+        toast('✅ Slot hazırlandı və paylaşıldı!', 'success');
         await loadHistory();
-        
-        // Check if more to do
         const btn = document.getElementById('autopilotBtn');
-        if (!btn.disabled) {
-           // wait 5 seconds before starting next
-           setTimeout(() => startAutopilot(), 5000);
-        }
+        btn.disabled = false;
+        btn.textContent = '🚀 Növbəti Slotu İşə Sal';
       } else if (d.status === 'error') {
         clearInterval(interval);
         hideStatus();
-        toast('❌ Autopilot dayandı: ' + d.message, 'error');
+        toast('❌ Slot dayandı: ' + d.message, 'error');
         const btn = document.getElementById('autopilotBtn');
         btn.disabled = false;
-        btn.textContent = '🚀 Autopilot Başlat (Yenidən Cəhd Et)';
+        btn.textContent = '🚀 Növbəti Slotu İşə Sal';
       }
     } catch {}
   }, 2000);

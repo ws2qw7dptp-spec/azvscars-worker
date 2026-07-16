@@ -1,3 +1,4 @@
+import hashlib
 import re
 
 
@@ -13,6 +14,8 @@ AZ_HASHTAGS = [
     "#azerbaijancars",
 ]
 
+AZN_PER_USD = 1.7
+
 
 def _clean(text):
     value = re.sub(r"\s+", " ", str(text or "")).strip()
@@ -23,14 +26,87 @@ def _clean(text):
 
 def _question_for(post_type):
     if post_type == "war":
-        return "Sol yoxsa sağ? 1 sözlə şərhdə yaz."
+        return "Hansını öz pulunla alardın və niyə? Qısa yox, səbəb yaz."
     if post_type == "night":
-        return "Gecə Bakıda açar səndə olsa hansını götürərdin?"
+        return "Gecə Bakıda açar səndə olsa hansını götürərdin və niyə?"
     if post_type == "quick":
-        return "Bu gün sürmək üçün hansını seçərdin?"
+        return "Bu gün sürmək üçün hansını seçərdin və niyə?"
     if post_type == "cinematic":
-        return "Səsə, görüntüyə və hissə görə sənin tərəfin hansıdır?"
-    return "Səncə Bakıda daha ağıllı seçim hansıdır?"
+        return "Bu çılğın maşın seriyasında növbəti nə görmək istərdin?"
+    return "Səncə Bakıda daha ağıllı seçim hansıdır və niyə?"
+
+
+def _non_question_cta(data, post_type):
+    car1 = _clean(data.get("car1_name"))
+    car2 = _clean(data.get("car2_name"))
+    by_type = {
+        "quick": [
+            f"{car1} tərəfdarını tag et.",
+            f"{car2} sevən dosta bunu göndər.",
+            "Sabahkı duel üçün səhifəni izləmədə qal.",
+        ],
+        "war": [
+            "Bu savaşı story-də paylaş, tərəfini göstər.",
+            f"{car1} və {car2} davası edən dostu tag et.",
+            "Şərhlərə baxmaq üçün postu paylaş və geri qayıt.",
+        ],
+        "night": [
+            "Gecə sürüşü sevən dostuna bunu göndər.",
+            "Vizual və səs üçün bu postu paylaş.",
+            "Bu cütlüyü story-də paylaş, tərəfini göstər.",
+        ],
+        "cinematic": [
+            "Bu seriyanı izləmək üçün səhifəni izləmədə saxla.",
+            "Bu çılğın maşını sevən dosta bunu göndər.",
+            "Növbəti epizodu qaçırmamaq üçün bu reel-i yadda saxla.",
+        ],
+        "main": [
+            "Qiymət müqayisəsi lazım olarsa postu yadda saxla.",
+            f"{car2} tərəfdarı tanıyırsansa bu postu paylaş.",
+            "Sabahkı duel üçün səhifəni izləmədə qal.",
+        ],
+    }
+    choices = by_type.get(post_type) or by_type["main"]
+    digest = hashlib.sha256(f"{car1}|{car2}|{post_type}".encode("utf-8")).hexdigest()
+    return choices[int(digest[:4], 16) % len(choices)]
+
+
+def _engagement_goal(post_type):
+    if post_type == "quick":
+        return "Bu formatın məqsədi sürətli şərh və tag toplamaqdır."
+    if post_type == "war":
+        return "Bu format paylaşım və alovlu şərh üçün qurulub."
+    if post_type == "night":
+        return "Bu format bəyənmə, paylaşım və fanat reaksiyası üçündür."
+    if post_type == "cinematic":
+        return "Bu reel bəyənmə, paylaşım, saxlanma və sabah geri qayıtma üçün hazırlanıb."
+    return "Bu post şərh, paylaşım və saxlanma balansı üçün hazırlanıb."
+
+
+def _format_azn(value):
+    amount = int(round(float(value)))
+    return f"{amount:,}".replace(",", " ") + " AZN"
+
+
+def normalize_price_label(value):
+    text = _clean(value).upper()
+    if not text:
+        return text
+    if "AZN" in text:
+        digits = re.findall(r"\d[\d\s,.]*", text)
+        return f"{digits[0].replace(',', ' ').strip()} AZN" if digits else text
+    usd_match = re.search(r"\$?\s*([\d,]+(?:\.\d+)?)", text)
+    if usd_match:
+        usd_value = usd_match.group(1).replace(",", "")
+        return _format_azn(float(usd_value) * AZN_PER_USD)
+    digits = re.findall(r"\d[\d\s,.]*", text)
+    if digits:
+        compact = digits[0].replace(",", "").replace(" ", "")
+        try:
+            return _format_azn(float(compact))
+        except ValueError:
+            return text
+    return text
 
 
 def _buyer_angle(data):
@@ -79,18 +155,24 @@ def build_caption(data, post_type="main", media_type="carousel"):
     car2 = _clean(data.get("car2_name"))
     base = _clean(data.get("caption"))
     question = _question_for(post_type)
+    cta = _non_question_cta(data, post_type)
     buyer = _buyer_angle(data)
     power = f"{car1}: {_clean(data.get('slide2_car1_stat'))} | {car2}: {_clean(data.get('slide2_car2_stat'))}"
     speed = f"0-100: {_clean(data.get('slide3_car1_stat'))} vs {_clean(data.get('slide3_car2_stat'))}"
+    price = f"Bakı qiyməti: {normalize_price_label(data.get('slide4_car1_stat'))} vs {normalize_price_label(data.get('slide4_car2_stat'))}"
+    goal = _engagement_goal(post_type)
 
     lines = [
         base,
         "",
         power,
         speed,
+        price,
         buyer,
+        goal,
         question,
-        "Real seçim edənlər üçün: qiymətə yox, gündəlik istifadə + servis + xarakterə bax.",
+        cta,
+        "Real seçim edənlər üçün: qiymətə yox, gündəlik istifadə, servis və ikinci əl dəyərinə bax.",
         "",
         "Təsvir: " + build_alt_text(data, media_type)[:420],
         "",
@@ -102,9 +184,13 @@ def build_caption(data, post_type="main", media_type="carousel"):
 
 def apply_publish_quality(data, post_type="main", media_type="carousel"):
     enriched = dict(data)
+    enriched["slide4_title"] = "BAKI QİYMƏTİ"
+    enriched["slide4_car1_stat"] = normalize_price_label(enriched.get("slide4_car1_stat"))
+    enriched["slide4_car2_stat"] = normalize_price_label(enriched.get("slide4_car2_stat"))
     enriched["alt_text"] = build_alt_text(enriched, media_type)
     enriched["image_description"] = enriched["alt_text"]
     enriched["caption"] = build_caption(enriched, post_type, media_type)
+    enriched["engagement_goal"] = _engagement_goal(post_type)
     enriched["target_audience"] = "Azerbaijan car buyers and car enthusiasts"
     enriched["trust_rules"] = [
         "no_false_hook",

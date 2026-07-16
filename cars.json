@@ -1,7 +1,11 @@
 [
   {
     "name": "Hyundai Tucson 2022",
-    "price": "$24,500",
+    "price_azn": "41 650 AZN",
+    "year": 2022,
+    "engine": "2.0L",
+    "mileage_km": 38000,
+    "search_query": "Hyundai Tucson 2022",
     "specs": [
       {"label": "Engine", "value": "2.0L, 156 hp"},
       {"label": "Mileage", "value": "38,000 km"},
@@ -12,7 +16,11 @@
   },
   {
     "name": "BYD Song Plus 2023",
-    "price": "$27,900",
+    "price_azn": "47 430 AZN",
+    "year": 2023,
+    "engine": "Hybrid",
+    "mileage_km": 12000,
+    "search_query": "BYD Song Plus 2023",
     "specs": [
       {"label": "Engine", "value": "Hybrid, 218 hp"},
       {"label": "Mileage", "value": "12,000 km"},
@@ -20,5 +28,44 @@
       {"label": "Transmission", "value": "Automatic"}
     ],
     "note": "Source: public listing, priced Baku market, July 2026."
+  },
+  {
+    "name": "Dodge Stealth",
+    "price_azn": "17 000 AZN",
+    "year": 1992,
+    "engine": "3.0L",
+    "mileage_km": 142000,
+    "search_query": "Dodge Stealth 1992",
+    "specs": [
+      {"label": "Engine", "value": "3.0L"},
+      {"label": "Mileage", "value": "142,000 km"}
+    ],
+    "note": "Source: user-provided public listing screenshot, June 23, 2026."
+  },
+  {
+    "name": "Lamborghini Revuelto",
+    "price_azn": "1 137 000 AZN",
+    "year": 2024,
+    "engine": "6.5L",
+    "mileage_km": 1700,
+    "search_query": "Lamborghini Revuelto 2024",
+    "specs": [
+      {"label": "Engine", "value": "6.5L"},
+      {"label": "Mileage", "value": "1,700 km"}
+    ],
+    "note": "Source: user-provided public listing screenshot, July 4, 2026."
+  },
+  {
+    "name": "VAZ 2107",
+    "price_azn": "12 000 AZN",
+    "year": 2006,
+    "engine": "1.7L",
+    "mileage_km": 112000,
+    "search_query": "VAZ 2107 2006",
+    "specs": [
+      {"label": "Engine", "value": "1.7L"},
+      {"label": "Mileage", "value": "112,000 km"}
+    ],
+    "note": "Source: user-provided public listing screenshot, July 2026."
   }
 ]

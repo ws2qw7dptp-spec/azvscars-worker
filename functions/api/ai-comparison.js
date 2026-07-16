@@ -14,6 +14,8 @@ Rules:
 - Use accurate real-world specs.
 - battle_title must be 2-4 words max.
 - Captions must be catchy for car owners and enthusiasts in Azerbaijan.
+- Slide 4 must use realistic Baku-market style pricing in AZN, not USD.
+- Caption should support Instagram growth signals: comments, likes, shares, saves, and follows.
 
 Required JSON shape:
 {
@@ -28,9 +30,9 @@ Required JSON shape:
   "slide3_title": "0-100 KM/S",
   "slide3_car1_stat": "3.8 san.",
   "slide3_car2_stat": "3.9 san.",
-  "slide4_title": "BAŞLANĞIC QİYMƏTİ",
-  "slide4_car1_stat": "$76,000",
-  "slide4_car2_stat": "$83,000",
+  "slide4_title": "BAKI QİYMƏTİ",
+  "slide4_car1_stat": "129 000 AZN",
+  "slide4_car2_stat": "141 000 AZN",
   "caption": "2-4 natural Azerbaijani sentences comparing the cars and asking for comments.",
   "hashtags": "#azvscars #azerbaijan #avto #baku #masin"
 }`;
@@ -56,18 +58,18 @@ const REQUIRED_FIELDS = [
 
 function instructionFor(postType) {
   if (postType === "quick") {
-    return "POST TYPE: Quick Choice. Pick a highly recognizable tribal matchup that owners will argue about. Strongly prefer China vs Germany, EV vs petrol, Tesla vs German luxury, Japanese reliability vs German prestige, or old V8 vs modern hybrid.";
+    return "POST TYPE: Quick Choice. Pick a highly recognizable tribal matchup that owners will argue about. Strongly prefer China vs Germany, EV vs petrol, Tesla vs German luxury, Japanese reliability vs German prestige, or old V8 vs modern hybrid. Optimize for fast comments and tags, and make viewers explain why.";
   }
   if (postType === "war") {
-    return "POST TYPE: Comment War. Pick the most controversial status matchup possible: Chinese premium SUV/EV vs Mercedes/BMW/Range Rover, G-Class vs Land Cruiser, Lexus vs Range Rover, Tesla vs BMW/Mercedes, or V8 old generation vs new hybrid. The pair must naturally split car owners into two sides.";
+    return "POST TYPE: Comment War. Pick the most controversial status matchup possible: Chinese premium SUV/EV vs Mercedes/BMW/Range Rover, G-Class vs Land Cruiser, Lexus vs Range Rover, Tesla vs BMW/Mercedes, or V8 old generation vs new hybrid. The pair must naturally split car owners into two sides, be share-worthy, and trigger long arguments instead of one-word votes.";
   }
   if (postType === "night") {
-    return "POST TYPE: Dark Night Battle. Pick aggressive cars with fanbases: AMG vs M, RS vs M, Mustang vs M4, old V8 AMG vs new hybrid AMG, GT-R vs 911 Turbo, or Hellcat vs European performance.";
+    return "POST TYPE: Dark Night Battle. Pick aggressive cars with fanbases: AMG vs M, RS vs M, Mustang vs M4, old V8 AMG vs new hybrid AMG, GT-R vs 911 Turbo, or Hellcat vs European performance. Optimize for likes and shares.";
   }
   if (postType === "cinematic") {
-    return "POST TYPE: Cinematic Reel. Pick a car topic that works with motion, sound, and fast curiosity: engine sound quiz, night POV, hidden features, drag race result, interior battle, expensive mistakes, or surprising fact. Keep it Azerbaijani and debate-driven.";
+    return "POST TYPE: Crazy Cars Episode Reel. Do NOT make this a normal comparison. Pick one crazy car topic that works with motion, sound, obsession, or shock value: insane supercar fact, wild modification, expensive ownership mistake, crazy exhaust, guess the car, dream garage, or a machine that feels almost unreal. Keep it Azerbaijani, episode-like, curiosity-driven, and optimized for likes, shares, saves, and return visits tomorrow.";
   }
-  return "POST TYPE: Real VS Battle. Pick a debate-driven matchup with owner loyalty. Prioritize China vs Germany, EV vs petrol, reliability vs prestige, value vs badge, old-school engine vs new technology.";
+  return "POST TYPE: Real VS Battle. Pick a debate-driven matchup with owner loyalty. Prioritize China vs Germany, EV vs petrol, reliability vs prestige, value vs badge, old-school engine vs new technology. Make it useful enough to save and force people to justify their answer.";
 }
 
 function pairKey(value) {

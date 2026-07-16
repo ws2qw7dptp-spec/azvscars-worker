@@ -10,6 +10,9 @@ const SLIDE_KEYS = [
 ];
 
 const GRAPH_VERSION = "v25.0";
+const MIN_FEED_GAP_MS = 4 * 60 * 60 * 1000;
+const MAX_FEED_POSTS_PER_DAY = 2;
+const DEFAULT_HASHTAGS = "#azvscars #azerbaycan #baku #avto #masin #avtomobil #avtobazar";
 
 async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
@@ -34,6 +37,131 @@ function storyUrl(meta, baseUrl, sid, file) {
   return known[storyFile] || proxiedUrl(baseUrl, sid, storyFile);
 }
 
+function parseSessionDate(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const isoLike = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const date = new Date(isoLike);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function bakuDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baku",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function validateFeedCadence(index, sid, mediaType) {
+  if (mediaType === "story") return null;
+  const publishedFeed = (Array.isArray(index) ? index : [])
+    .filter((item) => item.sid !== sid)
+    .filter((item) => Boolean(item?.published?.carousel || item?.published?.reel));
+
+  const now = new Date();
+  const todayKey = bakuDateKey(now);
+  const todayFeedCount = publishedFeed.filter((item) => {
+    const created = parseSessionDate(item.created_at);
+    return created && bakuDateKey(created) === todayKey;
+  }).length;
+
+  if (todayFeedCount >= MAX_FEED_POSTS_PER_DAY) {
+    return `Bu gün üçün feed limiti dolub. Audit qaydasına görə maksimum ${MAX_FEED_POSTS_PER_DAY} feed post paylaşılır.`;
+  }
+
+  const latestPublishedAt = publishedFeed
+    .flatMap((item) => [item?.published?.carousel?.published_at, item?.published?.reel?.published_at])
+    .map((value) => parseSessionDate(value))
+    .filter(Boolean)
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+
+  if (!latestPublishedAt) return null;
+
+  const diff = now.getTime() - latestPublishedAt.getTime();
+  if (diff >= MIN_FEED_GAP_MS) return null;
+
+  const waitMinutes = Math.ceil((MIN_FEED_GAP_MS - diff) / 60000);
+  return `Son feed post çox yenidir. Yeni paylaşım üçün ən az 4 saat ara saxlanmalıdır. Təxminən ${waitMinutes} dəqiqə sonra yenidən cəhd et.`;
+}
+
+function cleanText(value) {
+  return String(value || "")
+    .replace(/\r/g, "")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/komment/gi, "şərh")
+    .trim();
+}
+
+function engagementLine(postType) {
+  if (postType === "quick") return "Bu reel sürətli şərh və tag almaq üçün optimizasiya olunub.";
+  if (postType === "war") return "Bu reel paylaşım və alovlu şərh üçün optimizasiya olunub.";
+  if (postType === "night") return "Bu reel bəyənmə, paylaşım və fanat reaksiyası üçün optimizasiya olunub.";
+  if (postType === "cinematic") return "Bu reel bəyənmə, paylaşım və saxlanma üçün optimizasiya olunub.";
+  if (postType === "market") return "Bu reel saxlanma, paylaşım və real bazar müzakirəsi üçün optimizasiya olunub.";
+  return "Bu post şərh, paylaşım və saxlanma balansı üçün optimizasiya olunub.";
+}
+
+function nonQuestionCta(postType, meta) {
+  const car1 = meta.car1_name || "sol maşın";
+  const car2 = meta.car2_name || "sağ maşın";
+  if (postType === "quick") return `${car1} seçən dostu tag et.`;
+  if (postType === "war") return `${car2} tərəfdarı tanıyırsansa bu postu paylaş.`;
+  if (postType === "night") return "Gecə sürüşünü sevən dosta bunu göndər.";
+  if (postType === "cinematic") return "Video xoşuna gəldisə paylaş və yadda saxla.";
+  if (postType === "market") return "Maşın axtaran dosta göndər və reel-i yadda saxla.";
+  return "Qiymət müqayisəsi lazım olarsa postu yadda saxla.";
+}
+
+function ensureHashtags(text) {
+  return /#azvscars/i.test(text) ? text : `${text}\n\n${DEFAULT_HASHTAGS}`.trim();
+}
+
+function buildAltText(meta, mediaType) {
+  const data = meta.data || {};
+  const title = data.battle_title || "AZvsCars müqayisəsi";
+  const kind = mediaType === "reel" ? "Reel video" : "Karusel post";
+  return cleanText(
+    `${kind}: ${title}. Sol tərəfdə ${meta.car1_name || "birinci avtomobil"}, sağ tərəfdə ${meta.car2_name || "ikinci avtomobil"}. ` +
+    `Güc: ${data.slide2_car1_stat || ""} və ${data.slide2_car2_stat || ""}. ` +
+    `Sürət: ${data.slide3_car1_stat || ""} və ${data.slide3_car2_stat || ""}. ` +
+    `Qiymət: ${data.slide4_car1_stat || ""} və ${data.slide4_car2_stat || ""}.`
+  );
+}
+
+function finalizePublishPayload(meta, rawCaption, mediaType) {
+  const postType = meta.post_type || "main";
+  const lines = cleanText(rawCaption).split("\n").map((line) => line.trim()).filter(Boolean);
+  const textBody = lines.filter((line) => !line.startsWith("#")).join("\n");
+  const requiredLines = [engagementLine(postType), nonQuestionCta(postType, meta)];
+  let caption = textBody;
+  for (const line of requiredLines) {
+    if (!caption.toLowerCase().includes(line.toLowerCase())) {
+      caption = `${caption}\n${line}`.trim();
+    }
+  }
+  caption = ensureHashtags(cleanText(caption));
+  const altText = cleanText(meta.alt_text || meta.image_description || buildAltText(meta, mediaType));
+  return {
+    caption,
+    alt_text: altText,
+    image_description: altText,
+    publish_strategy: {
+      optimized_at: new Date().toISOString(),
+      media_type: mediaType,
+      engagement_focus: engagementLine(postType),
+      cta_focus: nonQuestionCta(postType, meta),
+    },
+  };
+}
+
 export async function onRequestPost({ request, env, params }) {
   const sid = params.sid;
   const kv = env.AZVSCARS_KV;
@@ -44,9 +172,16 @@ export async function onRequestPost({ request, env, params }) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const caption = body.caption || meta.caption || "";
   const media_type = body.media_type || "carousel";
   const publishKey = media_type === "story" ? `story:${body.story_file || "story1_brand.jpg"}` : media_type;
+  const index = await kv.get("sessions:index", "json");
+  const cadenceError = validateFeedCadence(index, sid, media_type);
+  if (cadenceError) {
+    return new Response(JSON.stringify({ error: cadenceError }), {
+      status: 409,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   if (meta.published?.[publishKey]) {
     return new Response(JSON.stringify({
@@ -62,6 +197,8 @@ export async function onRequestPost({ request, env, params }) {
   const url = new URL(request.url);
   const base_url = `${url.protocol}//${url.host}`;
   const graphVersion = env.META_GRAPH_VERSION || GRAPH_VERSION;
+  const optimized = finalizePublishPayload(meta, body.caption || meta.caption || "", media_type);
+  const caption = optimized.caption;
 
   if (!ig_token || !ig_user_id) {
     return new Response(JSON.stringify({ error: "META_ACCESS_TOKEN veya INSTAGRAM_ACCOUNT_ID ayarlanmayıb." }), { status: 400, headers: { "Content-Type": "application/json" } });
@@ -196,6 +333,9 @@ export async function onRequestPost({ request, env, params }) {
 
     // Mark this media type as published in KV.
     meta.caption = caption;
+    meta.alt_text = optimized.alt_text;
+    meta.image_description = optimized.image_description;
+    meta.publish_strategy = optimized.publish_strategy;
     meta.published = meta.published || {};
     meta.published[publishKey] = {
       post_id,
@@ -212,6 +352,7 @@ export async function onRequestPost({ request, env, params }) {
         index[idx].is_published = Boolean(meta.is_published || media_type === "story");
         index[idx].published = meta.published;
         index[idx].story_slot = meta.story_slot || index[idx].story_slot || "";
+        index[idx].publish_strategy = meta.publish_strategy || index[idx].publish_strategy || {};
         await kv.put("sessions:index", JSON.stringify(index));
       }
     }

@@ -157,10 +157,12 @@ def session_save(sid: str, meta: dict):
     index.append({
         "sid":          sid,
         "post_type":    meta.get("post_type", ""),
+        "story_slot":   meta.get("story_slot", ""),
         "car1":         meta.get("car1_name", ""),
         "car2":         meta.get("car2_name", ""),
         "alt_text":     meta.get("alt_text", "") or meta.get("data", {}).get("alt_text", ""),
         "image_description": meta.get("image_description", "") or meta.get("data", {}).get("image_description", ""),
+        "publish_strategy": meta.get("publish_strategy", {}),
         "created_at":   meta.get("created_at", ""),
         "is_published": meta.get("is_published", False),
         "published":    meta.get("published", {}),

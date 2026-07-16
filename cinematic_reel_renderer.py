@@ -44,20 +44,29 @@ def _cover_resize(frame):
     return resized[y:y + OUT_H, x:x + OUT_W]
 
 
-def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False, show_divider=True):
+def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False, show_divider=True, theme="versus"):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(rgb).convert("RGBA")
     overlay = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    draw.rectangle([0, 0, OUT_W, 320], fill=(0, 0, 0, 135))
-    draw.rectangle([0, OUT_H - 320, OUT_W, OUT_H], fill=(0, 0, 0, 155))
+    draw.rectangle([0, 0, OUT_W, 320], fill=(0, 0, 0, 135 if theme == "versus" else 108))
+    draw.rectangle([0, OUT_H - 320, OUT_W, OUT_H], fill=(0, 0, 0, 155 if theme == "versus" else 185))
     if show_divider:
         draw.rectangle([OUT_W // 2 - 3, 0, OUT_W // 2 + 3, OUT_H], fill=(*COLOR_RED, 180))
-
-    draw.rounded_rectangle([60, 78, OUT_W - 60, 188], radius=0, fill=(*COLOR_RED, 245))
-    font = _fit_font(draw, text.upper(), OUT_W - 160, 76 if title else 68)
-    draw.text((OUT_W // 2, 132), text.upper(), font=font, fill=COLOR_WHITE, anchor="mm")
+        draw.rounded_rectangle([60, 78, OUT_W - 60, 188], radius=0, fill=(*COLOR_RED, 245))
+        font = _fit_font(draw, text.upper(), OUT_W - 160, 76 if title else 68)
+        draw.text((OUT_W // 2, 132), text.upper(), font=font, fill=COLOR_WHITE, anchor="mm")
+    else:
+        accent = (255, 122, 24)
+        draw.rounded_rectangle([56, 74, OUT_W - 180, 212], radius=28, fill=(*accent, 238))
+        draw.rounded_rectangle([OUT_W - 210, 74, OUT_W - 56, 212], radius=28, fill=(255, 255, 255, 235))
+        font = _fit_font(draw, text.upper(), OUT_W - 330, 78 if title else 70)
+        draw.text((92, 145), text.upper(), font=font, fill=COLOR_WHITE, anchor="lm")
+        tag_font = _font(42)
+        draw.text((OUT_W - 133, 143), "CRAZY", font=tag_font, fill=(10, 10, 10), anchor="mm")
+        draw.ellipse([OUT_W - 270, OUT_H - 360, OUT_W - 70, OUT_H - 160], fill=(*accent, 45))
+        draw.ellipse([40, 240, 200, 400], fill=(*accent, 30))
 
     if subtext:
         sub_font = _fit_font(draw, subtext.upper(), OUT_W - 140, 54)
@@ -73,7 +82,7 @@ def _draw_overlay(frame, text, subtext=None, progress=0.0, title=False, show_div
     return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
 
-def _frames_from_video(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True):
+def _frames_from_video(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True, theme="versus"):
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         return []
@@ -100,12 +109,13 @@ def _frames_from_video(path, seconds, cue, progress_start, progress_span, subtex
             frame, cue, subtext=subtext,
             progress=progress_start + progress_span * i / max(1, frames_needed),
             show_divider=show_divider,
+            theme=theme,
         ))
     cap.release()
     return frames
 
 
-def _frames_from_image(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True):
+def _frames_from_image(path, seconds, cue, progress_start, progress_span, subtext=None, show_divider=True, theme="versus"):
     img = cv2.imread(path)
     if img is None:
         img = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
@@ -117,6 +127,7 @@ def _frames_from_image(path, seconds, cue, progress_start, progress_span, subtex
             img.copy(), cue, subtext=subtext,
             progress=progress_start + progress_span * i / max(1, total),
             show_divider=show_divider,
+            theme=theme,
         ))
     return frames
 
@@ -141,6 +152,7 @@ def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, out
 
     cues = script.get("cues") or [script.get("title", "AVTO DÖYÜŞÜ")]
     show_divider = bool(script.get("is_comparison", True))
+    theme = script.get("theme", "versus")
     subtext = "SOL: ADI NƏDİR?  •  SAĞ: ADI NƏDİR?" if show_divider else "ADI NƏDİR?  •  SONDA AÇILIR"
     visual_sources = list(video_paths) or list(fallback_slide_paths)
     main_seconds = max(8.0, duration_sec - 2.0)
@@ -154,9 +166,9 @@ def render_cinematic_reel(video_paths, fallback_slide_paths, end_slide_path, out
         progress_start = idx / (segment_count + 1)
         progress_span = 1 / (segment_count + 1)
         if source.lower().endswith((".mp4", ".mov", ".webm", ".m4v")):
-            segment = _frames_from_video(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider)
+            segment = _frames_from_video(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider, theme)
         else:
-            segment = _frames_from_image(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider)
+            segment = _frames_from_image(source, segment_seconds, cue, progress_start, progress_span, subtext, show_divider, theme)
         frames.extend(segment)
 
     if end_slide_path:
