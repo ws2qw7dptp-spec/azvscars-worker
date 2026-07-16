@@ -5,7 +5,7 @@
     "year": 2022,
     "engine": "2.0L",
     "mileage_km": 38000,
-    "search_query": "Hyundai Tucson 2022",
+    "search_query": "Hyundai Tucson NX4",
     "specs": [
       {"label": "Engine", "value": "2.0L, 156 hp"},
       {"label": "Mileage", "value": "38,000 km"},
@@ -20,7 +20,7 @@
     "year": 2023,
     "engine": "Hybrid",
     "mileage_km": 12000,
-    "search_query": "BYD Song Plus 2023",
+    "search_query": "BYD Song Plus DM-i",
     "specs": [
       {"label": "Engine", "value": "Hybrid, 218 hp"},
       {"label": "Mileage", "value": "12,000 km"},
@@ -61,7 +61,7 @@
     "year": 2006,
     "engine": "1.7L",
     "mileage_km": 112000,
-    "search_query": "VAZ 2107 2006",
+    "search_query": "VAZ 2107 sedan",
     "specs": [
       {"label": "Engine", "value": "1.7L"},
       {"label": "Mileage", "value": "112,000 km"}

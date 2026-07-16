@@ -32,6 +32,49 @@ def set_status(sid, status, message):
 def pages_base_url():
     return (os.environ.get("PAGES_BASE_URL") or "https://azvscars.pages.dev").rstrip("/")
 
+
+def _asset_history():
+    history = cf.kv_get("assets:recent")
+    return history if isinstance(history, list) else []
+
+
+def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_assets):
+    from image_fetcher import fetch_unique_car_image
+
+    excluded_urls = {
+        item.get("url") for item in history + selected_assets
+        if isinstance(item, dict) and item.get("url")
+    }
+    excluded_hashes = {
+        item.get("fingerprint") for item in history + selected_assets
+        if isinstance(item, dict) and item.get("fingerprint")
+    }
+    variants = [query, f"{car_name} automobile exterior", f"{car_name} car"]
+    for variant in variants:
+        asset = fetch_unique_car_image(
+            variant,
+            output_path,
+            seed=f"{sid}:{slot}:{variant}",
+            excluded_urls=excluded_urls,
+            excluded_hashes=excluded_hashes,
+        )
+        if asset:
+            selected = {
+                "car": car_name,
+                "url": asset.get("url", ""),
+                "fingerprint": asset.get("fingerprint", ""),
+                "title": asset.get("title", ""),
+                "sid": sid,
+                "used_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+            selected_assets.append(selected)
+            return output_path
+    raise RuntimeError(f"No fresh high-quality image found for {car_name}; post cancelled to prevent repetition.")
+
+
+def _save_asset_history(history, selected_assets):
+    cf.kv_put("assets:recent", (selected_assets + history)[:160])
+
 # ─── Render & Upload Slides ───────────────────────────────────────────────────
 
 def render_and_upload(sid, data, img1_path, img2_path, flip1, flip2, tmp_dir):
@@ -174,7 +217,6 @@ def maybe_publish_post_story_reminder(sid, admin_pass):
 # ─── Generate Action ─────────────────────────────────────────────────────────
 
 def action_market_generate(sid, mark_done=True):
-    from image_fetcher import fetch_wikipedia_image
     from market_content import build_market_alt_text, build_market_caption, pick_market_batch
     from market_reel_renderer import render_market_slides
     import reel_renderer
@@ -183,11 +225,17 @@ def action_market_generate(sid, mark_done=True):
     cars = pick_market_batch(sid, count=3)
     use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
 
+    history = _asset_history()
+    selected_assets = []
+
     with tempfile.TemporaryDirectory() as tmp:
         image_paths = []
         for idx, car in enumerate(cars, start=1):
             set_status(sid, "running", f"🖼 {car['name']} şəkli hazırlanır…")
-            image_paths.append(fetch_wikipedia_image(car["search_query"], os.path.join(tmp, f"market_{idx}.jpg")))
+            image_paths.append(_fresh_car_asset(
+                sid, car["search_query"], car["name"],
+                os.path.join(tmp, f"market_{idx}.jpg"), idx, history, selected_assets,
+            ))
 
         set_status(sid, "running", "🎨 Market slaydları hazırlanır…")
         render_market_slides(cars, image_paths, tmp)
@@ -227,6 +275,7 @@ def action_market_generate(sid, mark_done=True):
                 "engagement_focus": "Saxlanma, paylaşım və real bazar müzakirəsi",
                 "cta_focus": "Maşın axtaran dosta göndər və reel-i yadda saxla.",
             },
+            "source_assets": selected_assets,
             "slide_urls": slide_urls,
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
             "created_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -245,6 +294,7 @@ def action_market_generate(sid, mark_done=True):
             ingest_to_pages(sid, meta, files)
         else:
             cf.session_save(sid, meta)
+            _save_asset_history(history, selected_assets)
 
     if mark_done:
         set_status(sid, "done", "✅ Market reel hazırdır!")
@@ -252,7 +302,6 @@ def action_market_generate(sid, mark_done=True):
 
 def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
     from ai_comparison import generate_comparison
-    from image_fetcher import fetch_wikipedia_image
     from video_sound_fetcher import choose_reel_type, cinematic_script, download_cinematic_assets
     import cinematic_reel_renderer
 
@@ -262,10 +311,18 @@ def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
     script = cinematic_script(reel_type, data["car1_name"], data["car2_name"])
     data = apply_publish_quality(data, post_type="cinematic", media_type="reel")
     use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
+    history = _asset_history()
+    selected_assets = []
 
     with tempfile.TemporaryDirectory() as tmp:
-        img1_path = fetch_wikipedia_image(data["car1_search_query"], os.path.join(tmp, "car1_orig.jpg"))
-        img2_path = fetch_wikipedia_image(data["car2_search_query"], os.path.join(tmp, "car2_orig.jpg"))
+        img1_path = _fresh_car_asset(
+            sid, data["car1_search_query"], data["car1_name"],
+            os.path.join(tmp, "car1_orig.jpg"), 1, history, selected_assets,
+        )
+        img2_path = _fresh_car_asset(
+            sid, data["car2_search_query"], data["car2_name"],
+            os.path.join(tmp, "car2_orig.jpg"), 2, history, selected_assets,
+        )
 
         set_status(sid, "running", "🎨 Brend slaydlar hazırlanır…")
         flip1, flip2 = False, True
@@ -318,6 +375,7 @@ def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
                 "cinematic_sources": media.get("sources", []),
                 "cinematic_media_errors": media.get("errors", []),
             },
+            "source_assets": selected_assets,
             "slide_urls": slide_urls,
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
             "created_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -336,6 +394,7 @@ def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
             ingest_to_pages(sid, meta, files)
         else:
             cf.session_save(sid, meta)
+            _save_asset_history(history, selected_assets)
 
     if mark_done:
         set_status(sid, "done", "✅ Cinematic reel hazırdır!")
@@ -343,7 +402,6 @@ def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
 
 def action_generate(sid, post_type, make_reel, mark_done=True):
     from ai_comparison import generate_comparison
-    from image_fetcher   import fetch_wikipedia_image
     import reel_renderer
 
     try:
@@ -367,10 +425,18 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
         set_status(sid, "running", f"🖼 Şəkillər yüklənir: {data['car1_name']} / {data['car2_name']}")
 
         use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
+        history = _asset_history()
+        selected_assets = []
 
         with tempfile.TemporaryDirectory() as tmp:
-            img1_path = fetch_wikipedia_image(data["car1_search_query"], os.path.join(tmp, "car1_orig.jpg"))
-            img2_path = fetch_wikipedia_image(data["car2_search_query"], os.path.join(tmp, "car2_orig.jpg"))
+            img1_path = _fresh_car_asset(
+                sid, data["car1_search_query"], data["car1_name"],
+                os.path.join(tmp, "car1_orig.jpg"), 1, history, selected_assets,
+            )
+            img2_path = _fresh_car_asset(
+                sid, data["car2_search_query"], data["car2_name"],
+                os.path.join(tmp, "car2_orig.jpg"), 2, history, selected_assets,
+            )
 
             set_status(sid, "running", "🎨 Karusel slayidlər render edilir…")
             flip1, flip2 = False, True
@@ -407,6 +473,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 "alt_text":   data.get("alt_text", ""),
                 "image_description": data.get("image_description", ""),
                 "data":       data,
+                "source_assets": selected_assets,
                 "slide_urls": slide_urls,
                 "reel_url":   reel_url,
                 "created_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -425,6 +492,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 ingest_to_pages(sid, meta, files)
             else:
                 cf.session_save(sid, meta)
+                _save_asset_history(history, selected_assets)
         if mark_done:
             set_status(sid, "done", "✅ Hazırdır!")
         print(f"[generate] Done. sid={sid}")
