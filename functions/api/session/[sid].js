@@ -5,7 +5,10 @@ const SLIDE_KEYS = [
 
 function normalizeSlideUrls(meta, baseUrl, sid) {
   // Prefer the stable Pages/R2 proxy. Worker-generated R2 presigned URLs expire.
-  return SLIDE_KEYS.map(k => `${baseUrl}/api/image/${sid}/${k}`);
+  const stored = meta.slide_urls || {};
+  return SLIDE_KEYS
+    .filter(k => Boolean(stored[k]))
+    .map(k => `${baseUrl}/api/image/${sid}/${k}`);
 }
 
 export async function onRequestGet({ request, env, params }) {
@@ -37,6 +40,11 @@ export async function onRequestGet({ request, env, params }) {
   return new Response(JSON.stringify({
     sid: sid,
     post_type: meta.post_type || "",
+    content_series: meta.content_series || "",
+    posting_slot: meta.posting_slot || "",
+    posting_time_azt: meta.posting_time_azt || "",
+    posting_label: meta.posting_label || "",
+    metadata_version: meta.metadata_version || "",
     car1_name: meta.car1_name || "Avtomobil 1",
     car2_name: meta.car2_name || "Avtomobil 2",
     flip1: meta.flip1 || false,

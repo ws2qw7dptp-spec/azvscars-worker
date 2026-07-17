@@ -158,10 +158,11 @@ function finalizePublishPayload(meta, rawCaption, mediaType) {
     alt_text: altText,
     image_description: altText,
     publish_strategy: {
+      ...(meta.publish_strategy || {}),
       optimized_at: new Date().toISOString(),
       media_type: mediaType,
-      engagement_focus: engagementLine(postType),
-      cta_focus: nonQuestionCta(postType, meta),
+      publish_engagement_focus: engagementLine(postType),
+      publish_cta_focus: nonQuestionCta(postType, meta),
     },
   };
 }
@@ -356,6 +357,11 @@ export async function onRequestPost({ request, env, params }) {
         index[idx].is_published = Boolean(meta.is_published || media_type === "story");
         index[idx].published = meta.published;
         index[idx].story_slot = meta.story_slot || index[idx].story_slot || "";
+        index[idx].content_series = meta.content_series || index[idx].content_series || "";
+        index[idx].posting_slot = meta.posting_slot || index[idx].posting_slot || "";
+        index[idx].posting_time_azt = meta.posting_time_azt || index[idx].posting_time_azt || "";
+        index[idx].posting_label = meta.posting_label || index[idx].posting_label || "";
+        index[idx].metadata_version = meta.metadata_version || index[idx].metadata_version || "";
         index[idx].publish_strategy = meta.publish_strategy || index[idx].publish_strategy || {};
         await kv.put("sessions:index", JSON.stringify(index));
       }

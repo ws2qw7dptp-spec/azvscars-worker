@@ -14,6 +14,7 @@ load_dotenv()
 
 import cloudflare_storage as cf
 from publish_quality import apply_publish_quality
+from posting_plan import metadata_fields
 
 SLIDE_KEYS = [
     "slide1_cover.png", "slide2_power.png", "slide3_speed.png",
@@ -32,6 +33,10 @@ def set_status(sid, status, message):
 
 def pages_base_url():
     return (os.environ.get("PAGES_BASE_URL") or "https://azvscars.pages.dev").rstrip("/")
+
+
+def _metadata(post_type, media_type="reel"):
+    return metadata_fields(post_type, media_type)
 
 
 def _asset_history():
@@ -300,10 +305,15 @@ def action_market_generate(sid, mark_done=True):
 
         caption = build_market_caption(cars)
         alt_text = build_market_alt_text(cars)
+        meta_fields = _metadata("market", "reel")
         meta = {
             "sid": sid,
             "post_type": "market",
-            "content_series": "baku_market",
+            "content_series": meta_fields["content_series"],
+            "posting_slot": meta_fields["posting_slot"],
+            "posting_time_azt": meta_fields["posting_time_azt"],
+            "posting_label": meta_fields["posting_label"],
+            "metadata_version": meta_fields["metadata_version"],
             "car1_name": cars[0]["name"],
             "car2_name": cars[1]["name"] if len(cars) > 1 else "Baku bazarı",
             "caption": caption,
@@ -318,11 +328,7 @@ def action_market_generate(sid, mark_done=True):
                 "slide3_car2_stat": cars[1]["mileage"] if len(cars) > 1 else "",
                 "audio_sources": audio_assets,
             },
-            "publish_strategy": {
-                "pillar": "market_utility",
-                "engagement_focus": "Saxlanma, paylaşım və real bazar müzakirəsi",
-                "cta_focus": "Maşın axtaran dosta göndər və reel-i yadda saxla.",
-            },
+            "publish_strategy": meta_fields["publish_strategy"],
             "source_assets": selected_assets,
             "slide_urls": {},
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
@@ -394,6 +400,7 @@ def action_night_supercar_generate(sid, mark_done=True):
             normalized["used_at"] = used_at
             video_sources.append(normalized)
         source_assets = video_sources + audio_sources
+        meta_fields = _metadata("night_supercar", "reel")
         caption = (
             "Gecə səsi açıq saxla. 🏁\n\n"
             "Supercar, yarış və sərgi kadrlarından hansını bir də izlədin? "
@@ -404,7 +411,11 @@ def action_night_supercar_generate(sid, mark_done=True):
         meta = {
             "sid": sid,
             "post_type": "night_supercar",
-            "content_series": "night_supercar_special",
+            "content_series": meta_fields["content_series"],
+            "posting_slot": meta_fields["posting_slot"],
+            "posting_time_azt": meta_fields["posting_time_azt"],
+            "posting_label": meta_fields["posting_label"],
+            "metadata_version": meta_fields["metadata_version"],
             "car1_name": "Night Supercars",
             "car2_name": "Racing & Exhibition",
             "caption": caption,
@@ -416,11 +427,7 @@ def action_night_supercar_generate(sid, mark_done=True):
                 "has_time_overlay": False,
                 "end_card": "FOLLOW @azvscars",
             },
-            "publish_strategy": {
-                "pillar": "night_supercar_special",
-                "engagement_focus": "Replay, share and follow",
-                "cta_focus": "FOLLOW @azvscars",
-            },
+            "publish_strategy": meta_fields["publish_strategy"],
             "source_assets": source_assets,
             "slide_urls": {},
             "reel_url": f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
@@ -620,9 +627,15 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 else:
                     reel_url = cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4")
 
+            meta_fields = _metadata(post_type, "reel" if make_reel else "carousel")
             meta = {
                 "sid":        sid,
                 "post_type":  post_type,
+                "content_series": meta_fields["content_series"],
+                "posting_slot": meta_fields["posting_slot"],
+                "posting_time_azt": meta_fields["posting_time_azt"],
+                "posting_label": meta_fields["posting_label"],
+                "metadata_version": meta_fields["metadata_version"],
                 "car1_name":  data["car1_name"],
                 "car2_name":  data["car2_name"],
                 "flip1":      flip1,
@@ -631,6 +644,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 "alt_text":   data.get("alt_text", ""),
                 "image_description": data.get("image_description", ""),
                 "data":       data,
+                "publish_strategy": meta_fields["publish_strategy"],
                 "source_assets": selected_assets,
                 "slide_urls": slide_urls,
                 "reel_url":   reel_url,

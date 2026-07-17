@@ -498,7 +498,7 @@ body {
   <!-- Schedule Tracker -->
   <div class="tracker-card" id="scheduleTracker">
     <div class="tracker-hdr">
-      <div class="tracker-title">📅 Bugünkü Plan — Clean comparison reels + 3 night supercar reels + story support</div>
+      <div class="tracker-title">📅 Bugünkü Plan — 6 clean reels + story support</div>
       <button class="btn-autopilot" id="autopilotBtn" onclick="startAutopilot()">
         🚀 Növbəti Slotu İşə Sal
       </button>
@@ -519,9 +519,19 @@ body {
         <div class="track-name">Clean Comparison · Şərh Savaşı</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
-      <div class="track-item" id="track-night_supercar">
-        <div class="track-time">🏁 20:30 / 22:30 / 00:30</div>
-        <div class="track-name">Night Supercar · Clean Follow Reel</div>
+      <div class="track-item" id="track-2030_supercar">
+        <div class="track-time">🏁 20:30</div>
+        <div class="track-name">Night Supercar · Drop 1</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-2230_supercar">
+        <div class="track-time">🏁 22:30</div>
+        <div class="track-name">Night Supercar · Drop 2</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-0030_supercar">
+        <div class="track-time">🏁 00:30</div>
+        <div class="track-name">Night Supercar · Drop 3</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-morning">
@@ -780,7 +790,8 @@ async function loadSession(sid) {
   document.getElementById('captionText').value = d.caption;
   document.getElementById('altText').value = [
     d.alt_text || d.image_description || '',
-    d.publish_strategy?.engagement_focus ? `Strategiya: ${d.publish_strategy.engagement_focus}` : ''
+    d.publish_strategy?.primary_goal ? `Strategiya: ${d.publish_strategy.primary_goal} + ${d.publish_strategy.secondary_goal}` : '',
+    d.posting_slot ? `Slot: ${d.posting_slot} · ${d.posting_time_azt || 'manual'}` : ''
   ].filter(Boolean).join('\n\n');
 
   const pubBtn = document.getElementById('publishBtn');
@@ -876,10 +887,12 @@ async function deletePost() {
 // ── History & Tracking ────────────────────────────────────────────────────────
 let todayHistory = [];
 const DAILY_POST_PLAN = [
-  { type: 'quick', label: '09:00 Clean Comparison Reel' },
-  { type: 'main', label: '13:00 Clean Comparison Reel' },
-  { type: 'war', label: '19:30 Clean Comparison Reel' },
-  { type: 'night_supercar', label: '20:30 Night Supercar Reel' },
+  { type: 'quick', postingSlot: '0900_quick', label: '09:00 Clean Comparison Reel' },
+  { type: 'main', postingSlot: '1300_main', label: '13:00 Clean Comparison Reel' },
+  { type: 'war', postingSlot: '1930_war', label: '19:30 Clean Comparison Reel' },
+  { type: '2030_supercar', postType: 'night_supercar', postingSlot: '2030_supercar', label: '20:30 Night Supercar Reel' },
+  { type: '2230_supercar', postType: 'night_supercar', postingSlot: '2230_supercar', label: '22:30 Night Supercar Reel' },
+  { type: '0030_supercar', postType: 'night_supercar', postingSlot: '0030_supercar', label: '00:30 Night Supercar Reel' },
 ];
 const DAILY_STORY_PLAN = [
   { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45-09:00 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
@@ -938,7 +951,7 @@ async function loadHistory() {
       <div class="history-card" onclick="loadSession('${s.sid}')">
         <div class="history-vs">${POST_TYPE_LABELS[s.post_type] || 'VS MÜQAYİSƏ'}</div>
         <div class="history-names">${s.car1 || '?'}<br>${s.car2 || '?'}</div>
-        <div class="history-date">${s.created_at || ''}</div>
+        <div class="history-date">${s.created_at || ''}${s.posting_time_azt ? ` · ${s.posting_time_azt}` : ''}</div>
         ${isSessionPublished(s)
           ? `<div class="history-status status-pub">✅ Paylaşılıb</div>`
           : `<div class="history-status status-pend">⏳ Gözləyir</div>`}
@@ -951,12 +964,16 @@ function updateTracker(items) {
   const publishedToday = items.filter(s => sessionDateKey(s) === today && isSessionPublished(s));
   let allDone = true;
   
-  DAILY_PLAN.forEach(({ type, postType, storySlot }) => {
+  DAILY_PLAN.forEach(({ type, postType, storySlot, postingSlot }) => {
     const el = document.getElementById(`track-${type}`);
     if (!el) return;
     const statusEl = el.querySelector('.track-status');
     const expectedType = postType || type;
-    const published = publishedToday.find(s => s.post_type === expectedType && (!storySlot || s.story_slot === storySlot));
+    const published = publishedToday.find(s => (
+      s.post_type === expectedType
+      && (!storySlot || s.story_slot === storySlot)
+      && (!postingSlot || s.posting_slot === postingSlot)
+    ));
     
     if (published) {
       const time = String(published.created_at || '').slice(11, 16);
@@ -1012,6 +1029,7 @@ async function startAutopilot() {
         post_type: planItem.postType || missingType,
         make_reel: true,
         auto_publish: true,
+        posting_slot: planItem.postingSlot || 'manual',
         story_slot: planItem.storySlot || 'all',
         story_files: planItem.files || '',
       })

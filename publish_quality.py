@@ -1,6 +1,8 @@
 import hashlib
 import re
 
+from posting_plan import profile_for
+
 
 AZ_HASHTAGS = [
     "#azvscars",
@@ -25,6 +27,9 @@ def _clean(text):
 
 
 def _question_for(post_type):
+    profile = profile_for(post_type)
+    if profile.get("cta"):
+        return profile["cta"]
     if post_type == "war":
         return "Hansını öz pulunla alardın və niyə? Qısa yox, səbəb yaz."
     if post_type == "night":
@@ -72,15 +77,11 @@ def _non_question_cta(data, post_type):
 
 
 def _engagement_goal(post_type):
-    if post_type == "quick":
-        return "Bu formatın məqsədi sürətli şərh və tag toplamaqdır."
-    if post_type == "war":
-        return "Bu format paylaşım və alovlu şərh üçün qurulub."
-    if post_type == "night":
-        return "Bu format bəyənmə, paylaşım və fanat reaksiyası üçündür."
-    if post_type == "cinematic":
-        return "Bu reel bəyənmə, paylaşım, saxlanma və sabah geri qayıtma üçün hazırlanıb."
-    return "Bu post şərh, paylaşım və saxlanma balansı üçün hazırlanıb."
+    profile = profile_for(post_type)
+    return (
+        f"Bu format {profile['primary_goal']}, {profile['secondary_goal']} və "
+        f"{profile['pillar']} üçün optimizasiya olunub."
+    )
 
 
 def _format_azn(value):
@@ -157,6 +158,7 @@ def build_alt_text(data, media_type="carousel"):
 
 
 def build_caption(data, post_type="main", media_type="carousel"):
+    profile = profile_for(post_type)
     car1 = _clean(data.get("car1_name"))
     car2 = _clean(data.get("car2_name"))
     base = _clean(data.get("caption"))
@@ -182,7 +184,7 @@ def build_caption(data, post_type="main", media_type="carousel"):
         "",
         "Təsvir: " + build_alt_text(data, media_type)[:420],
         "",
-        " ".join(AZ_HASHTAGS),
+        " ".join(profile.get("hashtags") or AZ_HASHTAGS),
     ]
     caption = "\n".join(line for line in lines if line is not None).strip()
     return caption[:2150]
@@ -198,6 +200,8 @@ def apply_publish_quality(data, post_type="main", media_type="carousel"):
     enriched["caption"] = build_caption(enriched, post_type, media_type)
     enriched["engagement_goal"] = _engagement_goal(post_type)
     enriched["target_audience"] = "Azerbaijan car buyers and car enthusiasts"
+    enriched["content_series"] = profile_for(post_type)["series"]
+    enriched["posting_profile"] = profile_for(post_type)
     enriched["trust_rules"] = [
         "no_false_hook",
         "short_real_specs",

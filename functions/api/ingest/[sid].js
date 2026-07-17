@@ -129,6 +129,11 @@ export async function onRequestPost({ request, env, params }) {
     index.unshift({
       sid,
       post_type: meta.post_type || "",
+      content_series: meta.content_series || "",
+      posting_slot: meta.posting_slot || "",
+      posting_time_azt: meta.posting_time_azt || "",
+      posting_label: meta.posting_label || "",
+      metadata_version: meta.metadata_version || "",
       story_slot: meta.story_slot || "",
       car1: meta.car1_name || "",
       car2: meta.car2_name || "",

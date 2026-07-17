@@ -43,6 +43,7 @@ export async function onRequestPost({ request, env }) {
     post_type: isStories ? "stories" : post_type,
     make_reel,
     auto_publish,
+    posting_slot: body.posting_slot || "manual",
   };
   if (isStories) {
     inputs.story_slot = body.story_slot || "all";

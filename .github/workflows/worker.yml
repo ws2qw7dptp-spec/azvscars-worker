@@ -73,6 +73,11 @@ concurrency:
           - all
         required: false
         default: "all"
+      posting_slot:
+        description: "Posting schedule slot id"
+        type: string
+        required: false
+        default: "manual"
 
 jobs:
   run-worker:
@@ -96,6 +101,7 @@ jobs:
       PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
+      POSTING_SLOT: ${{ github.event.inputs.posting_slot }}
 
     steps:
       - name: Checkout
