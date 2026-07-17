@@ -86,13 +86,29 @@ export async function onRequestPost({ request, env, params }) {
       if (!Array.isArray(assetHistory)) assetHistory = [];
       const incomingUrls = new Set(meta.source_assets.map(item => item?.url).filter(Boolean));
       const incomingHashes = new Set(meta.source_assets.map(item => item?.fingerprint).filter(Boolean));
+      const incomingProviderIds = new Set(meta.source_assets.map(item => item?.provider_id).filter(Boolean));
       assetHistory = assetHistory.filter(item => (
-        item && !incomingUrls.has(item.url) && !incomingHashes.has(item.fingerprint)
+        item
+        && !incomingUrls.has(item.url)
+        && !incomingHashes.has(item.fingerprint)
+        && !incomingProviderIds.has(item.provider_id)
       ));
       await kv.put(
         "assets:recent",
         JSON.stringify([...meta.source_assets, ...assetHistory].slice(0, 120)),
       );
+
+      const incomingAudioIds = meta.source_assets
+        .filter(item => item?.media_type === "audio" && item?.provider_id)
+        .map(item => String(item.provider_id));
+      if (incomingAudioIds.length) {
+        let usedAudioIds = await kv.get("audio:used_ids", "json");
+        if (!Array.isArray(usedAudioIds)) usedAudioIds = [];
+        await kv.put(
+          "audio:used_ids",
+          JSON.stringify([...new Set([...incomingAudioIds, ...usedAudioIds.map(String)])]),
+        );
+      }
     }
 
     let index = await kv.get("sessions:index", "json");

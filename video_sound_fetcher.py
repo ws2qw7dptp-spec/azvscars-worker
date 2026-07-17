@@ -379,6 +379,131 @@ def _download_freesound_sfx(output_dir, limit):
     return found
 
 
+def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
+    """Fetch one fresh CC0 startup/rev sound for each market card."""
+    token = os.environ.get("FREESOUND_API_KEY", "").strip()
+    if not token:
+        return [], []
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    history = asset_history if isinstance(asset_history, list) else []
+    excluded_ids = {
+        str(item.get("provider_id")) for item in history
+        if isinstance(item, dict) and item.get("media_type") == "audio" and item.get("provider_id")
+    }
+    paths = []
+    sources = []
+
+    for index, car in enumerate(cars):
+        car_name = str(car.get("name") or "car")
+        engine = str(car.get("engine") or "")
+        queries = _startup_queries(car_name, engine)
+        choices = {}
+        for query in queries:
+            candidate = _search_fresh_freesound(query, token, f"{seed}:{index}:{query}", excluded_ids)
+            if candidate:
+                current = choices.get(str(candidate["id"]))
+                if not current or candidate["selection_score"] > current["selection_score"]:
+                    choices[str(candidate["id"])] = candidate
+        chosen = max(choices.values(), key=lambda item: item["selection_score"], default=None)
+        if not chosen:
+            print(f"[audio] No fresh CC0 startup sound found for {car_name}")
+            continue
+
+        preview = (chosen.get("previews") or {}).get("preview-hq-mp3")
+        path = out / f"startup_{index + 1}.mp3"
+        if not preview or not _download_file(preview, path, max_bytes=12 * 1024 * 1024):
+            continue
+
+        provider_id = str(chosen["id"])
+        excluded_ids.add(provider_id)
+        paths.append(str(path))
+        sources.append({
+            "media_type": "audio",
+            "provider": "freesound",
+            "provider_id": provider_id,
+            "car": car_name,
+            "name": chosen.get("name", ""),
+            "creator": chosen.get("username", ""),
+            "license": chosen.get("license", ""),
+            "url": chosen.get("url", ""),
+            "query": chosen.get("selected_query", ""),
+            "used_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        })
+        print(f"[audio] {car_name}: Freesound {provider_id} - {chosen.get('name', '')}")
+    return paths, sources
+
+
+def _startup_queries(car_name, engine):
+    normalized = f"{car_name} {engine}".lower()
+    if any(word in normalized for word in ("electric", "ev", "byd")) and "hybrid" not in normalized:
+        category = ["electric vehicle", "electric motor", "car acceleration"]
+    elif any(word in normalized for word in ("lamborghini", "ferrari", "mclaren", "v10", "v12", "6.5")):
+        category = ["v12 rev", "v10 rev", "supercar", "engine start"]
+    elif any(word in normalized for word in ("vaz", "lada", "dodge", "3.0")):
+        category = ["engine start", "v8 rev", "car exhaust", "car rev"]
+    else:
+        category = ["engine start", "v8 rev", "car exhaust", "car acceleration"]
+
+    short_name = " ".join(car_name.split()[:2])
+    return [f"{short_name} engine start", *category, "engine start", "v8 rev"]
+
+
+def _search_fresh_freesound(query, token, seed, excluded_ids):
+    res = requests.get(
+        "https://freesound.org/apiv2/search/",
+        params={
+            "query": query,
+            "filter": 'duration:[1.5 TO 14] license:"Creative Commons 0"',
+            "sort": "rating_desc",
+            "group_by_pack": "1",
+            "page_size": 30,
+            "fields": "id,name,previews,license,duration,username,url,tags,avg_rating,num_ratings",
+        },
+        headers={"Authorization": f"Token {token}"},
+        timeout=25,
+    )
+    res.raise_for_status()
+    candidates = []
+    for item in res.json().get("results", []):
+        provider_id = str(item.get("id") or "")
+        preview = (item.get("previews") or {}).get("preview-hq-mp3")
+        if not provider_id or provider_id in excluded_ids or not preview:
+            continue
+        name_and_tags = f"{item.get('name', '')} {' '.join(item.get('tags') or [])}".lower()
+        if not any(term in name_and_tags for term in (
+            "car", "automobile", "vehicle", "exhaust", "rev", "v8", "v10", "v12", "supercar",
+        )):
+            continue
+        if any(term in name_and_tags for term in (
+            "sci-fi", "scifi", "spaceship", "space ship", "video game", "synthesized", "computer", "boot",
+        )):
+            continue
+        jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        score = float(item.get("avg_rating") or 0) * 20 + min(int(item.get("num_ratings") or 0), 40) + jitter * 18
+        if any(term in name_and_tags for term in ("cold start", "coldstart", "startup")):
+            score += 100
+        elif "start" in name_and_tags:
+            score += 55
+        if any(term in name_and_tags for term in ("rev", "exhaust", "acceleration", "drive by", "supercar")):
+            score += 48
+        if any(term in name_and_tags for term in ("v8", "v10", "v12", "sports car")):
+            score += 28
+        if any(term in name_and_tags for term in ("idle", "stationary", "stationair", "traffic", "inside car")):
+            score -= 85
+        if any(term in name_and_tags for term in ("bus", "truck", "motorcycle", "motorbike", "tractor", "diesel", "fan")):
+            score -= 110
+        candidates.append((score, item))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: row[0], reverse=True)
+    selected = dict(candidates[0][1])
+    selected["selected_query"] = query
+    selected["selection_score"] = candidates[0][0]
+    return selected
+
+
 def _local_sfx_files(limit):
     base = Path("assets/sfx")
     if not base.exists():

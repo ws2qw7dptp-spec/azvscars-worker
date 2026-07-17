@@ -219,11 +219,8 @@ def render_market_slides(cars, image_paths, out_dir):
         canvas = _draw_listing(canvas, cars[idx], idx + 1, total)
         canvas.save(os.path.join(out_dir, targets[idx]), optimize=True)
 
-    # Keep the five-file contract used by the dashboard even if the car library is small.
+    # Keep three car cards; market Reels intentionally have no template outro screens.
     for idx in range(total, 3):
         canvas = _photo_stage(image_paths[idx % total])
         canvas = _draw_listing(canvas, cars[idx % total], idx + 1, total)
         canvas.save(os.path.join(out_dir, targets[idx]), optimize=True)
-
-    _draw_compare_slide(os.path.join(out_dir, "slide4_price.png"), cars[:total])
-    _draw_outro_slide(os.path.join(out_dir, "slide5_outro.png"), cars[:total])

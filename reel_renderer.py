@@ -106,7 +106,45 @@ def _mux_audio(video_path, audio_path, output_path, duration):
         raise RuntimeError(completed.stderr.decode("utf-8", errors="replace")[-2000:])
 
 
-def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=1.5):
+def _mux_audio_segments(video_path, audio_paths, output_path, segment_duration):
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    command = [ffmpeg_exe, "-y", "-i", video_path]
+    for audio_path in audio_paths:
+        command.extend(["-i", audio_path])
+
+    chains = []
+    labels = []
+    fade_out = max(0.35, segment_duration - 0.28)
+    for index in range(len(audio_paths)):
+        label = f"a{index}"
+        labels.append(f"[{label}]")
+        chains.append(
+            f"[{index + 1}:a]"
+            "silenceremove=start_periods=1:start_duration=0.02:start_threshold=-46dB,"
+            f"atrim=duration={segment_duration:.3f},asetpts=PTS-STARTPTS,"
+            "highpass=f=35,lowpass=f=15500,acompressor=threshold=-16dB:ratio=3:attack=8:release=90,"
+            f"afade=t=in:st=0:d=0.10,afade=t=out:st={fade_out:.3f}:d=0.28,"
+            f"apad=pad_dur={segment_duration:.3f},atrim=duration={segment_duration:.3f}[{label}]"
+        )
+    chains.append(f"{''.join(labels)}concat=n={len(labels)}:v=0:a=1[outa]")
+    total_duration = segment_duration * len(audio_paths)
+    command.extend([
+        "-filter_complex", ";".join(chains),
+        "-map", "0:v:0",
+        "-map", "[outa]",
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-t", f"{total_duration:.3f}",
+        "-movflags", "+faststart",
+        output_path,
+    ])
+    completed = subprocess.run(command, capture_output=True)
+    if completed.returncode != 0:
+        raise RuntimeError(completed.stderr.decode("utf-8", errors="replace")[-2000:])
+
+
+def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=1.5, audio_files=None):
     """Render a polished vertical H.264 reel with eased motion and soft transitions."""
     if not slide_paths:
         raise ValueError("No slide paths provided.")
@@ -144,9 +182,13 @@ def render_reel(slide_paths: list, output_path: str, fps=30, slide_duration_sec=
 
     temp_video = output_path + ".silent.mp4"
     _encode_frames(frame_stream(), temp_video, fps, width, height)
+    valid_audio = [path for path in (audio_files or []) if path and os.path.exists(path)]
     audio_file = select_audio_file(output_path)
     try:
-        if audio_file:
+        if len(valid_audio) == len(slides):
+            print(f"[reel] Using {len(valid_audio)} per-card startup sounds")
+            _mux_audio_segments(temp_video, valid_audio, output_path, slide_duration_sec)
+        elif audio_file:
             print(f"[reel] Using audio: {audio_file}")
             _mux_audio(temp_video, audio_file, output_path, total_duration)
         else:

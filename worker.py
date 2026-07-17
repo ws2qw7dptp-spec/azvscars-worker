@@ -19,6 +19,7 @@ SLIDE_KEYS = [
     "slide1_cover.png", "slide2_power.png", "slide3_speed.png",
     "slide4_price.png", "slide5_outro.png",
 ]
+MARKET_SLIDE_KEYS = SLIDE_KEYS[:3]
 
 # ─── KV Status Helper ────────────────────────────────────────────────────────
 
@@ -36,6 +37,11 @@ def pages_base_url():
 def _asset_history():
     history = cf.kv_get("assets:recent")
     return history if isinstance(history, list) else []
+
+
+def _used_audio_ids():
+    values = cf.kv_get("audio:used_ids")
+    return [str(value) for value in values] if isinstance(values, list) else []
 
 
 def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_assets):
@@ -219,6 +225,7 @@ def maybe_publish_post_story_reminder(sid, admin_pass):
 def action_market_generate(sid, mark_done=True):
     from market_content import build_market_alt_text, build_market_caption, pick_market_batch
     from market_reel_renderer import render_market_slides
+    from video_sound_fetcher import download_market_startup_sounds
     import reel_renderer
 
     set_status(sid, "running", "💸 Bakı bazarı reel-i üçün maşınlar seçilir…")
@@ -241,12 +248,28 @@ def action_market_generate(sid, mark_done=True):
         render_market_slides(cars, image_paths, tmp)
         slide_urls = {
             filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
-            for filename in SLIDE_KEYS
+            for filename in MARKET_SLIDE_KEYS
         }
+
+        set_status(sid, "running", "🔊 Hər maşın üçün fərqli startup səsi seçilir…")
+        audio_paths, audio_assets = download_market_startup_sounds(
+            cars,
+            os.path.join(tmp, "market_audio"),
+            sid,
+            [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
+        )
+        if len(audio_paths) != len(cars):
+            raise RuntimeError("Fresh startup sound was not found for every market card; publish cancelled to prevent audio repetition.")
+        selected_assets.extend(audio_assets)
 
         set_status(sid, "running", "🎬 Market reel render edilir…")
         local_reel = os.path.join(tmp, "reel.mp4")
-        reel_renderer.render_reel([os.path.join(tmp, key) for key in SLIDE_KEYS], local_reel, slide_duration_sec=1.8)
+        reel_renderer.render_reel(
+            [os.path.join(tmp, key) for key in MARKET_SLIDE_KEYS],
+            local_reel,
+            slide_duration_sec=2.15,
+            audio_files=audio_paths,
+        )
         reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
 
         caption = build_market_caption(cars)
@@ -267,8 +290,7 @@ def action_market_generate(sid, mark_done=True):
                 "slide2_car2_stat": cars[1]["price_label"] if len(cars) > 1 else "",
                 "slide3_car1_stat": cars[0]["mileage"],
                 "slide3_car2_stat": cars[1]["mileage"] if len(cars) > 1 else "",
-                "slide4_car1_stat": cars[2]["price_label"] if len(cars) > 2 else cars[0]["price_label"],
-                "slide4_car2_stat": cars[2]["mileage"] if len(cars) > 2 else cars[0]["mileage"],
+                "audio_sources": audio_assets,
             },
             "publish_strategy": {
                 "pillar": "market_utility",
@@ -288,13 +310,16 @@ def action_market_generate(sid, mark_done=True):
             }
             for idx, image_path in enumerate(image_paths, start=1):
                 files[f"market_{idx}.jpg"] = _file_payload(image_path, "image/jpeg")
-            for filename in SLIDE_KEYS:
+            for filename in MARKET_SLIDE_KEYS:
                 files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
             set_status(sid, "running", "☁️ Market media Cloudflare Pages-ə göndərilir…")
             ingest_to_pages(sid, meta, files)
         else:
             cf.session_save(sid, meta)
             _save_asset_history(history, selected_assets)
+            existing_audio_ids = _used_audio_ids()
+            new_audio_ids = [item["provider_id"] for item in audio_assets]
+            cf.kv_put("audio:used_ids", list(dict.fromkeys(new_audio_ids + existing_audio_ids)))
 
     if mark_done:
         set_status(sid, "done", "✅ Market reel hazırdır!")
