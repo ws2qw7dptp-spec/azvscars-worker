@@ -487,14 +487,37 @@ def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
     for index, car in enumerate(cars):
         car_name = str(car.get("name") or "car")
         engine = str(car.get("engine") or "")
-        queries = _startup_queries(car_name, engine)
+        profile = _audio_profile(car_name, engine)
+        queries = _startup_queries(car_name, engine, profile)
         choices = {}
-        for query in queries:
-            candidate = _search_fresh_freesound(query, token, f"{seed}:{index}:{query}", excluded_ids)
+        for query_index, query in enumerate(queries):
+            candidate = _search_fresh_freesound(
+                query,
+                token,
+                f"{seed}:{index}:{query}",
+                excluded_ids,
+                profile=profile,
+                query_rank=query_index,
+            )
             if candidate:
                 current = choices.get(str(candidate["id"]))
                 if not current or candidate["selection_score"] > current["selection_score"]:
                     choices[str(candidate["id"])] = candidate
+        reused_fallback = False
+        if not choices:
+            for query_index, query in enumerate(queries):
+                candidate = _search_fresh_freesound(
+                    query,
+                    token,
+                    f"{seed}:reused:{index}:{query}",
+                    set(),
+                    profile=profile,
+                    query_rank=query_index,
+                )
+                if candidate:
+                    candidate["reused_audio_fallback"] = True
+                    choices[str(candidate["id"])] = candidate
+            reused_fallback = bool(choices)
         chosen = max(choices.values(), key=lambda item: item["selection_score"], default=None)
         if not chosen:
             print(f"[audio] No fresh CC0 startup sound found for {car_name}")
@@ -518,33 +541,77 @@ def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
             "license": chosen.get("license", ""),
             "url": chosen.get("url", ""),
             "query": chosen.get("selected_query", ""),
+            "audio_match": chosen.get("audio_match", {}),
+            "reused_fallback": bool(chosen.get("reused_audio_fallback") or reused_fallback),
+            "selection_score": round(float(chosen.get("selection_score") or 0), 2),
             "used_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         })
         print(f"[audio] {car_name}: Freesound {provider_id} - {chosen.get('name', '')}")
     return paths, sources
 
 
-def _startup_queries(car_name, engine):
+def _audio_profile(car_name, engine):
     normalized = f"{car_name} {engine}".lower()
-    if any(word in normalized for word in ("electric", "ev", "byd")) and "hybrid" not in normalized:
-        category = ["electric vehicle", "electric motor", "car acceleration"]
-    elif any(word in normalized for word in ("lamborghini", "ferrari", "mclaren", "v10", "v12", "6.5")):
-        category = ["v12 rev", "v10 rev", "supercar", "engine start"]
-    elif any(word in normalized for word in ("vaz", "lada", "dodge", "3.0")):
-        category = ["engine start", "v8 rev", "car exhaust", "car rev"]
-    else:
-        category = ["engine start", "v8 rev", "car exhaust", "car acceleration"]
+    brand = car_name.split()[0].lower() if car_name.split() else ""
+    model = " ".join(car_name.split()[:2]).lower()
+    is_ev = any(word in normalized for word in ("electric", " ev", "byd", "tesla", "nio", "zeekr")) and "hybrid" not in normalized
+    engine_class = ""
+    for value in ("v12", "v10", "v8", "v6"):
+        if value in normalized:
+            engine_class = value
+            break
+    if not engine_class and any(word in normalized for word in ("lamborghini", "ferrari", "pagani", "revuelto", "aventador", "6.5")):
+        engine_class = "v12"
+    if not engine_class and any(word in normalized for word in ("mclaren", "porsche", "amg", "bmw m", "dodge", "hellcat", "mustang")):
+        engine_class = "v8"
+    return {
+        "brand": brand,
+        "model": model,
+        "engine_class": "ev" if is_ev else engine_class,
+        "is_ev": is_ev,
+        "car_name": car_name,
+        "engine": engine,
+    }
 
+
+def _startup_queries(car_name, engine, profile=None):
+    profile = profile or _audio_profile(car_name, engine)
     short_name = " ".join(car_name.split()[:2])
-    return [f"{short_name} engine start", *category, "engine start", "v8 rev"]
+    brand = profile.get("brand", "")
+    engine_class = profile.get("engine_class", "")
+
+    if profile.get("is_ev"):
+        return [
+            f"{short_name} electric car acceleration",
+            f"{brand} electric vehicle sound",
+            "electric vehicle acceleration",
+            "electric car drive by",
+            "electric motor acceleration",
+            "EV acceleration",
+        ]
+
+    exact = [
+        f"{short_name} exhaust rev",
+        f"{short_name} engine start",
+        f"{brand} exhaust rev" if brand else "",
+    ]
+    engine_queries = {
+        "v12": ["v12 supercar rev", "v12 engine start", "v12 exhaust", "supercar rev"],
+        "v10": ["v10 supercar rev", "v10 engine start", "v10 exhaust", "supercar rev"],
+        "v8": ["v8 engine rev", "v8 cold start", "v8 exhaust", "sports car rev"],
+        "v6": ["v6 engine rev", "v6 exhaust", "sports car acceleration"],
+    }.get(engine_class, ["sports car engine start", "sports car exhaust", "car acceleration"])
+    generic = ["clean car rev", "smooth car acceleration", "engine start"]
+    return [item for item in [*exact, *engine_queries, *generic] if item]
 
 
-def _search_fresh_freesound(query, token, seed, excluded_ids):
+def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, query_rank=0):
+    profile = profile or {}
     res = requests.get(
         "https://freesound.org/apiv2/search/",
         params={
             "query": query,
-            "filter": 'duration:[1.5 TO 14] license:"Creative Commons 0"',
+            "filter": 'duration:[1.2 TO 10] license:"Creative Commons 0"',
             "sort": "rating_desc",
             "group_by_pack": "1",
             "page_size": 30,
@@ -563,26 +630,72 @@ def _search_fresh_freesound(query, token, seed, excluded_ids):
         name_and_tags = f"{item.get('name', '')} {' '.join(item.get('tags') or [])}".lower()
         if not any(term in name_and_tags for term in (
             "car", "automobile", "vehicle", "exhaust", "rev", "v8", "v10", "v12", "supercar",
+            "engine", "motor", "electric",
         )):
             continue
         if any(term in name_and_tags for term in (
             "sci-fi", "scifi", "spaceship", "space ship", "video game", "synthesized", "computer", "boot",
+            "laugh", "voice", "talk", "speech", "crash", "crash", "alarm", "horn", "siren", "screech",
+            "tire", "tyre", "skid", "traffic", "rain", "wind", "door", "beep", "fan", "loop",
         )):
             continue
         jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
-        score = float(item.get("avg_rating") or 0) * 20 + min(int(item.get("num_ratings") or 0), 40) + jitter * 18
+        duration = float(item.get("duration") or 0)
+        score = float(item.get("avg_rating") or 0) * 26 + min(int(item.get("num_ratings") or 0), 45) + jitter * 12
+        score += max(0, 28 - query_rank * 7)
+        match_terms = []
+
+        engine_class = profile.get("engine_class", "")
+        if profile.get("is_ev"):
+            if any(term in name_and_tags for term in ("electric", "ev", "motor", "vehicle")):
+                score += 130
+                match_terms.append("ev")
+            if any(term in name_and_tags for term in ("v8", "v10", "v12", "exhaust", "combustion", "diesel")):
+                score -= 260
+        elif engine_class:
+            if engine_class in name_and_tags:
+                score += 145
+                match_terms.append(engine_class)
+            elif any(term in name_and_tags for term in ("v8", "v10", "v12", "v6")):
+                score -= 115
+
+        brand = profile.get("brand", "")
+        model = profile.get("model", "")
+        if brand and brand in name_and_tags:
+            score += 70
+            match_terms.append("brand")
+        if model and all(part in name_and_tags for part in model.split()[:2] if len(part) > 1):
+            score += 95
+            match_terms.append("model")
+
         if any(term in name_and_tags for term in ("cold start", "coldstart", "startup")):
             score += 100
         elif "start" in name_and_tags:
             score += 55
-        if any(term in name_and_tags for term in ("rev", "exhaust", "acceleration", "drive by", "supercar")):
-            score += 48
+        if any(term in name_and_tags for term in ("rev", "exhaust", "acceleration", "drive by", "supercar", "throttle")):
+            score += 60
         if any(term in name_and_tags for term in ("v8", "v10", "v12", "sports car")):
             score += 28
-        if any(term in name_and_tags for term in ("idle", "stationary", "stationair", "traffic", "inside car")):
+        if 2.0 <= duration <= 7.5:
+            score += 35
+        elif duration > 9:
+            score -= 40
+        if any(term in name_and_tags for term in ("clean", "smooth", "supercar", "sports car", "drive by")):
+            score += 24
+        if any(term in name_and_tags for term in ("idle", "stationary", "stationair", "inside car", "interior")):
             score -= 85
-        if any(term in name_and_tags for term in ("bus", "truck", "motorcycle", "motorbike", "tractor", "diesel", "fan")):
+        if any(term in name_and_tags for term in ("bus", "truck", "motorcycle", "motorbike", "tractor", "diesel", "lawn")):
             score -= 110
+        if score < 60:
+            continue
+        item["audio_match"] = {
+            "car": profile.get("car_name", ""),
+            "engine": profile.get("engine", ""),
+            "engine_class": engine_class,
+            "query_rank": query_rank,
+            "matched_terms": match_terms,
+            "relaxing_score_rule": "clean short startup/rev/acceleration; noisy human/traffic/crash sounds rejected",
+        }
         candidates.append((score, item))
     if not candidates:
         return None
