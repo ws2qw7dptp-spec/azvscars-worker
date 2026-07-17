@@ -230,6 +230,18 @@ def maybe_publish_post_story_reminder(sid, admin_pass):
     try:
         if os.environ.get("POST_STORY_REMINDER", "true").lower() != "true":
             return
+        session_res = http_req.get(
+            f"{pages_base_url()}/api/session/{sid}",
+            headers={"X-Admin-Password": admin_pass},
+            timeout=30,
+        )
+        if not session_res.ok:
+            print(f"[worker] story reminder skipped: session read failed {session_res.status_code}")
+            return
+        session = session_res.json()
+        if "slide1_cover.png" not in (session.get("slide_urls") or {}):
+            print("[worker] story reminder skipped: clean reel has no slide1_cover.png")
+            return
         delay_raw = os.environ.get("POST_STORY_REMINDER_DELAY_SECONDS", "").strip()
         if delay_raw:
             delay = max(0, int(delay_raw))
