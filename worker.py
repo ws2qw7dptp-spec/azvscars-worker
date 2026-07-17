@@ -251,12 +251,11 @@ def maybe_publish_post_story_reminder(sid, admin_pass):
 
 def action_market_generate(sid, mark_done=True):
     from market_content import build_market_alt_text, build_market_caption, pick_market_batch
-    from market_reel_renderer import render_market_slides
+    from clean_reel_renderer import render_clean_single_car_reel
     from video_sound_fetcher import download_market_startup_sounds
-    import reel_renderer
 
     set_status(sid, "running", "💸 Bakı bazarı reel-i üçün maşınlar seçilir…")
-    cars = pick_market_batch(sid, count=3)
+    cars = pick_market_batch(sid, count=1)
     use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
 
     history = _asset_history()
@@ -271,14 +270,7 @@ def action_market_generate(sid, mark_done=True):
                 os.path.join(tmp, f"market_{idx}.jpg"), idx, history, selected_assets,
             ))
 
-        set_status(sid, "running", "🎨 Market slaydları hazırlanır…")
-        render_market_slides(cars, image_paths, tmp)
-        slide_urls = {
-            filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
-            for filename in MARKET_SLIDE_KEYS
-        }
-
-        set_status(sid, "running", "🔊 Hər maşın üçün fərqli startup səsi seçilir…")
+        set_status(sid, "running", "🔊 Bu maşın üçün fərqli startup səsi seçilir…")
         audio_paths, audio_assets = download_market_startup_sounds(
             cars,
             os.path.join(tmp, "market_audio"),
@@ -289,14 +281,9 @@ def action_market_generate(sid, mark_done=True):
             raise RuntimeError("Fresh startup sound was not found for every market card; publish cancelled to prevent audio repetition.")
         selected_assets.extend(audio_assets)
 
-        set_status(sid, "running", "🎬 Market reel render edilir…")
+        set_status(sid, "running", "🎬 Clean market reel render edilir…")
         local_reel = os.path.join(tmp, "reel.mp4")
-        reel_renderer.render_reel(
-            [os.path.join(tmp, key) for key in MARKET_SLIDE_KEYS],
-            local_reel,
-            slide_duration_sec=2.15,
-            audio_files=audio_paths,
-        )
+        render_clean_single_car_reel(cars[0], image_paths[0], local_reel, audio_paths=audio_paths)
         reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else None
 
         caption = build_market_caption(cars)
@@ -325,7 +312,7 @@ def action_market_generate(sid, mark_done=True):
                 "cta_focus": "Maşın axtaran dosta göndər və reel-i yadda saxla.",
             },
             "source_assets": selected_assets,
-            "slide_urls": slide_urls,
+            "slide_urls": {},
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
             "created_at": time.strftime("%Y-%m-%d %H:%M"),
             "is_published": False,
@@ -337,8 +324,6 @@ def action_market_generate(sid, mark_done=True):
             }
             for idx, image_path in enumerate(image_paths, start=1):
                 files[f"market_{idx}.jpg"] = _file_payload(image_path, "image/jpeg")
-            for filename in MARKET_SLIDE_KEYS:
-                files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
             set_status(sid, "running", "☁️ Market media Cloudflare Pages-ə göndərilir…")
             ingest_to_pages(sid, meta, files)
         else:
@@ -547,6 +532,8 @@ def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
 
 def action_generate(sid, post_type, make_reel, mark_done=True):
     from ai_comparison import generate_comparison
+    from clean_reel_renderer import render_clean_comparison_reel
+    from video_sound_fetcher import download_market_startup_sounds
     import reel_renderer
 
     try:
@@ -557,13 +544,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
             return action_night_supercar_generate(sid, mark_done=mark_done)
 
         if post_type == "cinematic":
-            try:
-                return action_cinematic_generate(sid, mark_done=mark_done, mode="crazy")
-            except Exception as cinematic_error:
-                print(f"[cinematic] fallback to night VS reel: {cinematic_error}")
-                set_status(sid, "running", "⚠️ Cinematic media tapılmadı, gecə VS reel fallback işə düşdü…")
-                post_type = "night"
-                make_reel = True
+            return action_night_supercar_generate(sid, mark_done=mark_done)
 
         set_status(sid, "running", "☁️ AI ilə müqayisə yaradılır…")
         data = generate_comparison(post_type=post_type)
@@ -586,25 +567,42 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 os.path.join(tmp, "car2_orig.jpg"), 2, history, selected_assets,
             )
 
-            set_status(sid, "running", "🎨 Karusel slayidlər render edilir…")
             flip1, flip2 = False, True
-            if use_pages_ingest:
-                slide_paths = render_local_slides(data, img1_path, img2_path, flip1, flip2, tmp)
-                slide_urls = {
-                    filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
-                    for filename in SLIDE_KEYS
-                }
-            else:
-                cf.r2_upload_file(img1_path, f"{sid}/car1_orig.jpg", "image/jpeg")
-                cf.r2_upload_file(img2_path, f"{sid}/car2_orig.jpg", "image/jpeg")
-                slide_urls = render_and_upload(sid, data, img1_path, img2_path, flip1, flip2, tmp)
+            slide_paths = {}
+            slide_urls = {}
+            if not make_reel:
+                set_status(sid, "running", "🎨 Karusel slayidlər render edilir…")
+                if use_pages_ingest:
+                    slide_paths = render_local_slides(data, img1_path, img2_path, flip1, flip2, tmp)
+                    slide_urls = {
+                        filename: f"{pages_base_url()}/api/image/{sid}/{filename}"
+                        for filename in SLIDE_KEYS
+                    }
+                else:
+                    cf.r2_upload_file(img1_path, f"{sid}/car1_orig.jpg", "image/jpeg")
+                    cf.r2_upload_file(img2_path, f"{sid}/car2_orig.jpg", "image/jpeg")
+                    slide_urls = render_and_upload(sid, data, img1_path, img2_path, flip1, flip2, tmp)
 
             reel_url = None
             if make_reel:
-                set_status(sid, "running", "🎬 Reel video render edilir…")
+                set_status(sid, "running", "🔊 Hər maşın üçün fərqli car sound seçilir…")
+                audio_profiles = [
+                    {"name": data["car1_name"], "engine": data.get("slide2_car1_stat", "")},
+                    {"name": data["car2_name"], "engine": data.get("slide2_car2_stat", "")},
+                ]
+                audio_paths, audio_assets = download_market_startup_sounds(
+                    audio_profiles,
+                    os.path.join(tmp, "comparison_audio"),
+                    sid,
+                    [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
+                )
+                if len(audio_paths) != 2:
+                    raise RuntimeError("Two fresh car sounds were not found; publish cancelled to prevent repeated or weak audio.")
+                selected_assets.extend(audio_assets)
+
+                set_status(sid, "running", "🎬 Clean comparison reel render edilir…")
                 local_reel = os.path.join(tmp, "reel.mp4")
-                local_slide_list = [os.path.join(tmp, k) for k in SLIDE_KEYS]
-                reel_renderer.render_reel(local_slide_list, local_reel)
+                render_clean_comparison_reel(data, img1_path, img2_path, local_reel, audio_paths=audio_paths)
                 if use_pages_ingest:
                     reel_url = f"{pages_base_url()}/api/image/{sid}/reel.mp4"
                 else:
@@ -633,7 +631,8 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                     "car2_orig.jpg": _file_payload(img2_path, "image/jpeg"),
                 }
                 for filename in SLIDE_KEYS:
-                    files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
+                    if filename in slide_paths:
+                        files[filename] = _file_payload(os.path.join(tmp, filename), "image/png")
                 if make_reel:
                     files["reel.mp4"] = _file_payload(local_reel, "video/mp4")
                 set_status(sid, "running", "☁️ Media Cloudflare Pages-ə göndərilir…")

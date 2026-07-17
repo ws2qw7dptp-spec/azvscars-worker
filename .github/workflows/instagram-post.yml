@@ -6,14 +6,18 @@ concurrency:
 
 on:
   schedule:
-    # 09:00 AZT -> 05:00 UTC (Daily Debate Reel)
+    # 09:00 AZT -> 05:00 UTC (Clean comparison reel)
     - cron: "0 5 * * *"
-    # 19:30 AZT -> 15:30 UTC (Market Reel)
-    - cron: "30 15 * * *"
-    # Night Supercar specials: 20:30, 22:30 and 00:30 AZT
+    # 13:00 AZT -> 09:00 UTC (Clean comparison reel)
+    - cron: "0 9 * * *"
+    # 20:30 AZT -> 16:30 UTC (Night Supercar Special)
     - cron: "30 16 * * *"
+    # 22:30 AZT -> 18:30 UTC (Night Supercar Special)
     - cron: "30 18 * * *"
+    # 00:30 AZT -> 20:30 UTC (Night Supercar Special)
     - cron: "30 20 * * *"
+    # 19:30 AZT -> 15:30 UTC (Clean comparison reel)
+    - cron: "30 15 * * *"
 
   workflow_dispatch:
     inputs:
@@ -25,10 +29,10 @@ on:
         options:
           - quick
           - main
-          - market
           - war
           - night
           - cinematic
+          - market
           - night_supercar
 
 jobs:
@@ -36,29 +40,19 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      CF_KV_NAMESPACE_ID: ${{ secrets.CF_KV_NAMESPACE_ID }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
-      META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-      INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
       ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
       PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
       INGEST_VIA_PAGES: "true"
       PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: 'pip'
@@ -71,11 +65,11 @@ jobs:
           else
             if [[ "${{ github.event.schedule }}" == "0 5 * * *" ]]; then
               echo "POST_TYPE=quick" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "0 9 * * *" ]]; then
+              echo "POST_TYPE=main" >> "$GITHUB_ENV"
             elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
-              echo "POST_TYPE=market" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 16 * * *" || \
-                    "${{ github.event.schedule }}" == "30 18 * * *" || \
-                    "${{ github.event.schedule }}" == "30 20 * * *" ]]; then
+              echo "POST_TYPE=war" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "30 16 * * *" || "${{ github.event.schedule }}" == "30 18 * * *" || "${{ github.event.schedule }}" == "30 20 * * *" ]]; then
               echo "POST_TYPE=night_supercar" >> "$GITHUB_ENV"
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
@@ -98,9 +92,10 @@ jobs:
       - name: Run Automated Post
         run: |
           SID="auto$(date +%Y%m%d%H%M%S)"
+          MAKE_REEL="true"
           python worker.py \
             --action generate \
             --sid "$SID" \
             --post_type "$POST_TYPE" \
-            --make_reel "true" \
+            --make_reel "$MAKE_REEL" \
             --auto_publish true

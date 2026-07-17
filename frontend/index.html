@@ -498,20 +498,30 @@ body {
   <!-- Schedule Tracker -->
   <div class="tracker-card" id="scheduleTracker">
     <div class="tracker-hdr">
-      <div class="tracker-title">📅 Bugünkü Plan — 1 Debate Reel + 1 Crazy Cars Reel + 3 Story Run</div>
+      <div class="tracker-title">📅 Bugünkü Plan — Clean comparison reels + 3 night supercar reels + story support</div>
       <button class="btn-autopilot" id="autopilotBtn" onclick="startAutopilot()">
         🚀 Növbəti Slotu İşə Sal
       </button>
     </div>
     <div class="tracker-grid">
       <div class="track-item" id="track-quick">
-        <div class="track-time">⚡ 07:00-08:00</div>
-        <div class="track-name">Sürücü Seçimi · Şərh/Tag</div>
+        <div class="track-time">⚡ 09:00</div>
+        <div class="track-name">Clean Comparison · Sürücü Seçimi</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-main">
+        <div class="track-time">🏷 13:00</div>
+        <div class="track-name">Clean Comparison · Real Avto Döyüş</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-war">
-        <div class="track-time">🔥 20:00-21:00</div>
-        <div class="track-name">Crazy Cars · Növbəti Seriya</div>
+        <div class="track-time">💬 19:30</div>
+        <div class="track-name">Clean Comparison · Şərh Savaşı</div>
+        <div class="track-status">⏳ Gözləyir</div>
+      </div>
+      <div class="track-item" id="track-night_supercar">
+        <div class="track-time">🏁 20:30 / 22:30 / 00:30</div>
+        <div class="track-name">Night Supercar · Clean Follow Reel</div>
         <div class="track-status">⏳ Gözləyir</div>
       </div>
       <div class="track-item" id="track-story-morning">
@@ -541,7 +551,7 @@ body {
     <div class="system-card">
       <div class="system-kicker">Reel</div>
       <div class="system-value">Strategik</div>
-      <div class="system-note">Quick = debate, Cinematic = crazy cars, Main/War = manual variants</div>
+      <div class="system-note">All feed posts are clean reels; night supercar runs 3 times nightly</div>
     </div>
     <div class="system-card">
       <div class="system-kicker">Story</div>
@@ -565,9 +575,9 @@ body {
     </div>
     <div class="gen-controls">
       <select id="postTypeSelect" class="styled-select">
-        <option value="quick">⚡ 07:00 — Sürücü Seçimi · Şərh/Tag</option>
-        <option value="cinematic">🔥 20:00 — Crazy Cars Reel · Episode</option>
-        <option value="market">💸 Manual — Baku Market Reel · Save/Share</option>
+        <option value="night_supercar">🏁 Night Supercar · Clean Follow Reel</option>
+        <option value="quick">⚡ Sürücü Seçimi · Clean Comparison Reel</option>
+        <option value="market">💸 Baku Market · One Car Reel</option>
         <option value="war">💬 Manual — Şərh Savaşı · Share War</option>
         <option value="night">🌙 Manual — Gecə Döyüşü · Like/Share</option>
         <option value="main">🏷 Manual — Real Avto Döyüş · Save/Share</option>
@@ -866,8 +876,10 @@ async function deletePost() {
 // ── History & Tracking ────────────────────────────────────────────────────────
 let todayHistory = [];
 const DAILY_POST_PLAN = [
-  { type: 'quick', label: '07:00-08:00 Sürücü Seçimi' },
-  { type: 'cinematic', label: '20:00-21:00 Crazy Cars Reel' },
+  { type: 'quick', label: '09:00 Clean Comparison Reel' },
+  { type: 'main', label: '13:00 Clean Comparison Reel' },
+  { type: 'war', label: '19:30 Clean Comparison Reel' },
+  { type: 'night_supercar', label: '20:30 Night Supercar Reel' },
 ];
 const DAILY_STORY_PLAN = [
   { type: 'story-morning', postType: 'stories', storySlot: 'morning', label: '08:45-09:00 Səhər Story-ləri', files: 'story1_brand.jpg,story2_schedule.jpg,story9_daily_duel.jpg' },
@@ -881,6 +893,7 @@ const POST_TYPE_LABELS = {
   war: 'ŞƏRH SAVAŞI REEL',
   night: 'GECƏ REELİ',
   cinematic: 'CRAZY CARS REEL',
+  night_supercar: 'NIGHT SUPERCAR REEL',
   market: 'BAKU MARKET REEL',
   stories: 'STORY',
 };

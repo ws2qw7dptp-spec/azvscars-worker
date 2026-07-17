@@ -21,15 +21,15 @@ concurrency:
         type: string
         required: true
       post_type:
-        description: "Post type (main, quick, market, war, night, cinematic, night_supercar)"
+        description: "Post type (main, quick, war, night, cinematic, market, night_supercar)"
         type: choice
         options:
           - main
           - quick
-          - market
           - war
           - night
           - cinematic
+          - market
           - night_supercar
           - stories
         required: false
@@ -96,14 +96,13 @@ jobs:
       PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"

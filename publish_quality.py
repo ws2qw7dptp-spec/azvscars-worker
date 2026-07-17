@@ -94,7 +94,13 @@ def normalize_price_label(value):
         return text
     if "AZN" in text:
         digits = re.findall(r"\d[\d\s,.]*", text)
-        return f"{digits[0].replace(',', ' ').strip()} AZN" if digits else text
+        if not digits:
+            return text
+        compact = digits[0].replace(",", "").replace(" ", "")
+        try:
+            return _format_azn(float(compact))
+        except ValueError:
+            return f"{digits[0].replace(',', ' ').strip()} AZN"
     usd_match = re.search(r"\$?\s*([\d,]+(?:\.\d+)?)", text)
     if usd_match:
         usd_value = usd_match.group(1).replace(",", "")
