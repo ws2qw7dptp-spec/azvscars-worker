@@ -87,7 +87,15 @@ def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_
         item.get("fingerprint") for item in history + selected_assets
         if isinstance(item, dict) and item.get("fingerprint")
     }
-    variants = [query, f"{car_name} automobile exterior", f"{car_name} car"]
+    short_name = " ".join(str(car_name).split()[:2])
+    variants = [
+        query,
+        f"{car_name} automobile exterior",
+        f"{car_name} car",
+        f"{short_name} exterior",
+        f"{short_name} side view",
+        f"{short_name} official car",
+    ]
     for variant in variants:
         asset = fetch_unique_car_image(
             variant,
@@ -107,7 +115,28 @@ def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_
             }
             selected_assets.append(selected)
             return output_path
-    raise RuntimeError(f"No fresh high-quality image found for {car_name}; post cancelled to prevent repetition.")
+
+    for variant in variants:
+        asset = fetch_unique_car_image(
+            variant,
+            output_path,
+            seed=f"{sid}:fallback:{slot}:{variant}",
+            excluded_urls=set(),
+            excluded_hashes=set(),
+        )
+        if asset:
+            selected_assets.append({
+                "car": car_name,
+                "url": asset.get("url", ""),
+                "fingerprint": asset.get("fingerprint", ""),
+                "title": asset.get("title", ""),
+                "sid": sid,
+                "used_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "reused_fallback": True,
+                "quality_note": "Fresh image pool was exhausted; reused highest-ranked high-quality image to keep posting reliable.",
+            })
+            return output_path
+    raise RuntimeError(f"No high-quality image found for {car_name}; post cancelled.")
 
 
 def _save_asset_history(history, selected_assets):
