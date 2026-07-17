@@ -560,6 +560,8 @@ def _audio_profile(car_name, engine):
         if value in normalized:
             engine_class = value
             break
+    if not engine_class and any(word in normalized for word in ("i6", "inline 6", "inline-six", "straight six", "straight-six", "3.0l")):
+        engine_class = "i6"
     if not engine_class and any(word in normalized for word in ("lamborghini", "ferrari", "pagani", "revuelto", "aventador", "6.5")):
         engine_class = "v12"
     if not engine_class and any(word in normalized for word in ("mclaren", "porsche", "amg", "bmw m", "dodge", "hellcat", "mustang")):
@@ -600,6 +602,7 @@ def _startup_queries(car_name, engine, profile=None):
         "v10": ["v10 supercar rev", "v10 engine start", "v10 exhaust", "supercar rev"],
         "v8": ["v8 engine rev", "v8 cold start", "v8 exhaust", "sports car rev"],
         "v6": ["v6 engine rev", "v6 exhaust", "sports car acceleration"],
+        "i6": ["inline six engine rev", "straight six exhaust", "toyota supra engine rev", "sports car smooth rev"],
     }.get(engine_class, ["sports car engine start", "sports car exhaust", "car acceleration"])
     generic = ["clean car rev", "smooth car acceleration", "engine start"]
     return [item for item in [*exact, *engine_queries, *generic] if item]
@@ -635,8 +638,9 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             continue
         if any(term in name_and_tags for term in (
             "sci-fi", "scifi", "spaceship", "space ship", "video game", "synthesized", "computer", "boot",
-            "laugh", "voice", "talk", "speech", "crash", "crash", "alarm", "horn", "siren", "screech",
+            "laugh", "voice", "talk", "speech", "crash", "alarm", "horn", "siren", "screech",
             "tire", "tyre", "skid", "traffic", "rain", "wind", "door", "beep", "fan", "loop",
+            "wheel", "gravel", "burnout", "drift", "sliding", "spin", "spinning", "dirt",
         )):
             continue
         jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
@@ -656,8 +660,8 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             if engine_class in name_and_tags:
                 score += 145
                 match_terms.append(engine_class)
-            elif any(term in name_and_tags for term in ("v8", "v10", "v12", "v6")):
-                score -= 115
+        elif any(term in name_and_tags for term in ("v8", "v10", "v12", "v6", "i6", "inline six", "straight six")):
+            score -= 115
 
         brand = profile.get("brand", "")
         model = profile.get("model", "")
@@ -674,7 +678,7 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             score += 55
         if any(term in name_and_tags for term in ("rev", "exhaust", "acceleration", "drive by", "supercar", "throttle")):
             score += 60
-        if any(term in name_and_tags for term in ("v8", "v10", "v12", "sports car")):
+        if any(term in name_and_tags for term in ("v8", "v10", "v12", "i6", "inline six", "straight six", "sports car")):
             score += 28
         if 2.0 <= duration <= 7.5:
             score += 35
