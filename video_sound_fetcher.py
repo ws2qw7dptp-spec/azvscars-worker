@@ -33,6 +33,29 @@ VIDEO_QUERIES = {
     "real_verdict": ["car driving night", "sports car road", "luxury car city"],
 }
 
+NIGHT_SUPERCAR_QUERIES = [
+    "Lamborghini supercar close up",
+    "Ferrari supercar close up",
+    "McLaren supercar close up",
+    "Porsche sports car close up",
+    "exotic supercar showroom",
+    "supercar exhibition close up",
+    "Bugatti hypercar close up",
+    "Pagani hypercar close up",
+    "race car pit lane close up",
+]
+
+SUPERCAR_CONTENT_TERMS = (
+    "lamborghini", "ferrari", "mclaren", "porsche", "bugatti", "pagani",
+    "supercar", "super-car", "sports-car", "sportscar", "race-car",
+    "racing-car", "exotic-car", "hypercar",
+)
+
+
+def _is_supercar_result(*values):
+    haystack = " ".join(str(value or "").lower().replace("_", "-") for value in values)
+    return any(term in haystack for term in SUPERCAR_CONTENT_TERMS)
+
 CAR_SPECIFIC_TYPES = {
     "sound_battle", "night_pov", "hidden_features", "owner_experience",
     "guess_the_car", "engine_sound_quiz", "drag_race_result",
@@ -272,7 +295,53 @@ def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3, ca
     }
 
 
-def _download_pexels_video(query, output_dir, index):
+def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_videos=3):
+    """Download fresh supercar/racing/exhibition clips with provider-level deduplication."""
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    excluded = {str(value) for value in (used_video_ids or [])}
+    queries = list(NIGHT_SUPERCAR_QUERIES)
+    random.Random(seed).shuffle(queries)
+    videos = []
+    errors = []
+
+    for query_index, query in enumerate(queries):
+        if len(videos) >= max_videos:
+            break
+        providers = [_download_pexels_video, _download_pixabay_video]
+        if int(hashlib.sha256(f"{seed}:{query_index}".encode()).hexdigest()[:2], 16) % 2:
+            providers.reverse()
+        for provider in providers:
+            try:
+                item = provider(
+                    query,
+                    out,
+                    len(videos),
+                    excluded_ids=excluded,
+                    seed=f"{seed}:{query_index}:{provider.__name__}",
+                    require_supercar=True,
+                )
+                if not item:
+                    continue
+                provider_id = f"{item['provider']}:{item['id']}"
+                if provider_id in excluded:
+                    continue
+                excluded.add(provider_id)
+                item["media_type"] = "video"
+                item["provider_id"] = provider_id
+                videos.append(item)
+                break
+            except Exception as exc:
+                errors.append(f"{provider.__name__}:{query}:{exc}")
+
+    return {
+        "videos": [item["path"] for item in videos],
+        "sources": [{k: v for k, v in item.items() if k != "path"} for item in videos],
+        "errors": errors[-8:],
+    }
+
+
+def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="", require_supercar=False):
     key = os.environ.get("PEXELS_API_KEY", "").strip()
     if not key:
         return None
@@ -285,7 +354,13 @@ def _download_pexels_video(query, output_dir, index):
     res.raise_for_status()
     videos = res.json().get("videos", [])
     candidates = []
+    excluded_ids = {str(value) for value in (excluded_ids or [])}
     for item in videos:
+        provider_id = f"pexels:{item.get('id')}"
+        if provider_id in excluded_ids:
+            continue
+        if require_supercar and not _is_supercar_result(item.get("url")):
+            continue
         files = item.get("video_files", [])
         ranked = sorted(
             [f for f in files if f.get("file_type") == "video/mp4" and f.get("link")],
@@ -298,7 +373,8 @@ def _download_pexels_video(query, output_dir, index):
             height = int(file_info.get("height") or 0)
             width = int(file_info.get("width") or 0)
             duration = float(item.get("duration") or 0)
-            score = (40 if height > width else 0) + min(height, 1920) / 100 + min(duration, 20)
+            jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+            score = (40 if height > width else 0) + min(height, 1920) / 100 + min(duration, 20) + jitter * 16
             candidates.append((score, item, file_info))
     for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
         path = output_dir / f"pexels_{index}.mp4"
@@ -313,7 +389,7 @@ def _download_pexels_video(query, output_dir, index):
     return None
 
 
-def _download_pixabay_video(query, output_dir, index):
+def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed="", require_supercar=False):
     key = os.environ.get("PIXABAY_API_KEY", "").strip()
     if not key:
         return None
@@ -330,20 +406,33 @@ def _download_pixabay_video(query, output_dir, index):
         timeout=20,
     )
     res.raise_for_status()
+    excluded_ids = {str(value) for value in (excluded_ids or [])}
+    candidates = []
     for item in res.json().get("hits", []):
+        provider_id = f"pixabay:{item.get('id')}"
+        if provider_id in excluded_ids:
+            continue
+        if require_supercar and not _is_supercar_result(item.get("pageURL"), item.get("tags")):
+            continue
         video_map = item.get("videos") or {}
         ranked = [video_map.get(k) for k in ("large", "medium", "small", "tiny")]
         ranked = [v for v in ranked if v and v.get("url")]
         ranked.sort(key=lambda v: (0 if int(v.get("height") or 0) > int(v.get("width") or 0) else 1, -int(v.get("height") or 0)))
-        for file_info in ranked:
-            path = output_dir / f"pixabay_{index}.mp4"
-            if _download_file(file_info["url"], path, max_bytes=80 * 1024 * 1024):
-                return {
-                    "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
-                    "query": query, "source_url": item.get("pageURL", ""),
-                    "creator": item.get("user", ""), "width": file_info.get("width"),
-                    "height": file_info.get("height"), "duration": item.get("duration"),
-                }
+        for file_info in ranked[:2]:
+            height = int(file_info.get("height") or 0)
+            width = int(file_info.get("width") or 0)
+            jitter = int(hashlib.sha256(f"{seed}:{provider_id}:{height}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+            score = (40 if height > width else 0) + min(height, 1920) / 100 + jitter * 16
+            candidates.append((score, item, file_info))
+    for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
+        path = output_dir / f"pixabay_{index}.mp4"
+        if _download_file(file_info["url"], path, max_bytes=80 * 1024 * 1024):
+            return {
+                "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
+                "query": query, "source_url": item.get("pageURL", ""),
+                "creator": item.get("user", ""), "width": file_info.get("width"),
+                "height": file_info.get("height"), "duration": item.get("duration"),
+            }
     return None
 
 

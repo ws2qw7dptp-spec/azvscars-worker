@@ -8,8 +8,12 @@ on:
   schedule:
     # 09:00 AZT -> 05:00 UTC (Daily Debate Reel)
     - cron: "0 5 * * *"
-    # 19:30 AZT -> 15:30 UTC (alternates Market Reel / Crazy Cars Reel)
+    # 19:30 AZT -> 15:30 UTC (Market Reel)
     - cron: "30 15 * * *"
+    # Night Supercar specials: 20:30, 22:30 and 00:30 AZT
+    - cron: "30 16 * * *"
+    - cron: "30 18 * * *"
+    - cron: "30 20 * * *"
 
   workflow_dispatch:
     inputs:
@@ -25,6 +29,7 @@ on:
           - war
           - night
           - cinematic
+          - night_supercar
 
 jobs:
   post-to-instagram:
@@ -67,12 +72,11 @@ jobs:
             if [[ "${{ github.event.schedule }}" == "0 5 * * *" ]]; then
               echo "POST_TYPE=quick" >> "$GITHUB_ENV"
             elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
-              DOW="$(TZ=Asia/Baku date +%u)"
-              if [[ "$DOW" == "1" || "$DOW" == "3" || "$DOW" == "5" || "$DOW" == "7" ]]; then
-                echo "POST_TYPE=market" >> "$GITHUB_ENV"
-              else
-                echo "POST_TYPE=cinematic" >> "$GITHUB_ENV"
-              fi
+              echo "POST_TYPE=market" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "30 16 * * *" || \
+                    "${{ github.event.schedule }}" == "30 18 * * *" || \
+                    "${{ github.event.schedule }}" == "30 20 * * *" ]]; then
+              echo "POST_TYPE=night_supercar" >> "$GITHUB_ENV"
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
             fi

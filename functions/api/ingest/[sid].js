@@ -109,6 +109,18 @@ export async function onRequestPost({ request, env, params }) {
           JSON.stringify([...new Set([...incomingAudioIds, ...usedAudioIds.map(String)])]),
         );
       }
+
+      const incomingVideoIds = meta.source_assets
+        .filter(item => item?.media_type === "video" && item?.provider_id)
+        .map(item => String(item.provider_id));
+      if (incomingVideoIds.length) {
+        let usedVideoIds = await kv.get("video:used_ids", "json");
+        if (!Array.isArray(usedVideoIds)) usedVideoIds = [];
+        await kv.put(
+          "video:used_ids",
+          JSON.stringify([...new Set([...incomingVideoIds, ...usedVideoIds.map(String)])]),
+        );
+      }
     }
 
     let index = await kv.get("sessions:index", "json");

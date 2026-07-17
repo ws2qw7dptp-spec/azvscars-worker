@@ -21,7 +21,7 @@ concurrency:
         type: string
         required: true
       post_type:
-        description: "Post type (main, quick, market, war, night, cinematic)"
+        description: "Post type (main, quick, market, war, night, cinematic, night_supercar)"
         type: choice
         options:
           - main
@@ -30,6 +30,7 @@ concurrency:
           - war
           - night
           - cinematic
+          - night_supercar
           - stories
         required: false
         default: "main"

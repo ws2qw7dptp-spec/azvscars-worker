@@ -44,6 +44,11 @@ def _used_audio_ids():
     return [str(value) for value in values] if isinstance(values, list) else []
 
 
+def _used_video_ids():
+    values = cf.kv_get("video:used_ids")
+    return [str(value) for value in values] if isinstance(values, list) else []
+
+
 def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_assets):
     from image_fetcher import fetch_unique_car_image
 
@@ -325,6 +330,99 @@ def action_market_generate(sid, mark_done=True):
         set_status(sid, "done", "✅ Market reel hazırdır!")
     print(f"[market] Done. sid={sid}")
 
+
+def action_night_supercar_generate(sid, mark_done=True):
+    from night_supercar_renderer import render_night_supercar_reel
+    from video_sound_fetcher import download_market_startup_sounds, download_night_supercar_assets
+
+    set_status(sid, "running", "🏁 Gecə supercar videoları seçilir…")
+    use_pages_ingest = os.environ.get("INGEST_VIA_PAGES", "").lower() == "true" or not os.environ.get("R2_ACCESS_KEY_ID")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        media = download_night_supercar_assets(
+            os.path.join(tmp, "night_supercar_video"),
+            sid,
+            used_video_ids=_used_video_ids(),
+            max_videos=3,
+        )
+        if len(media["videos"]) != 3:
+            raise RuntimeError(f"Three fresh supercar clips were not found; publish cancelled. {media.get('errors')}")
+
+        set_status(sid, "running", "🔊 Üç fərqli supercar səsi seçilir…")
+        sound_profiles = [
+            {"name": "V12 Supercar", "engine": "V12"},
+            {"name": "V10 Race Car", "engine": "V10"},
+            {"name": "V8 Exhibition Car", "engine": "V8"},
+        ]
+        audio_paths, audio_sources = download_market_startup_sounds(
+            sound_profiles,
+            os.path.join(tmp, "night_supercar_audio"),
+            sid,
+            [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
+        )
+        if len(audio_paths) != 3:
+            raise RuntimeError("Three fresh supercar sounds were not found; publish cancelled to prevent repetition.")
+
+        set_status(sid, "running", "🎬 Night Supercar Reel render edilir…")
+        local_reel = os.path.join(tmp, "reel.mp4")
+        render_night_supercar_reel(media["videos"], audio_paths, local_reel, sid)
+
+        used_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        video_sources = []
+        for source in media["sources"]:
+            normalized = dict(source)
+            normalized["url"] = normalized.get("source_url", "")
+            normalized["used_at"] = used_at
+            video_sources.append(normalized)
+        source_assets = video_sources + audio_sources
+        caption = (
+            "Gecə səsi açıq saxla. 🏁\n\n"
+            "Supercar, yarış və sərgi kadrlarından hansını bir də izlədin? "
+            "Maşın sevən dosta göndər və ən güclü səsi şərhdə yaz.\n\n"
+            "FOLLOW @azvscars\n\n"
+            "#azvscars #supercar #racing #carshow #baku #azerbaijan #cars"
+        )
+        meta = {
+            "sid": sid,
+            "post_type": "night_supercar",
+            "content_series": "night_supercar_special",
+            "car1_name": "Night Supercars",
+            "car2_name": "Racing & Exhibition",
+            "caption": caption,
+            "alt_text": "Gecə supercar, yarış və avtomobil sərgisi kadrlarından hazırlanmış dinamik Reel.",
+            "image_description": "Three unique supercar, racing and exhibition clips with unique engine sounds.",
+            "data": {
+                "video_sources": video_sources,
+                "audio_sources": audio_sources,
+                "has_time_overlay": False,
+                "end_card": "FOLLOW @azvscars",
+            },
+            "publish_strategy": {
+                "pillar": "night_supercar_special",
+                "engagement_focus": "Replay, share and follow",
+                "cta_focus": "FOLLOW @azvscars",
+            },
+            "source_assets": source_assets,
+            "slide_urls": {},
+            "reel_url": f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
+            "created_at": time.strftime("%Y-%m-%d %H:%M"),
+            "is_published": False,
+        }
+
+        if use_pages_ingest:
+            set_status(sid, "running", "☁️ Night Supercar media Cloudflare-ə göndərilir…")
+            ingest_to_pages(sid, meta, {"reel.mp4": _file_payload(local_reel, "video/mp4")})
+        else:
+            cf.session_save(sid, meta)
+            current_audio = _used_audio_ids()
+            current_video = _used_video_ids()
+            cf.kv_put("audio:used_ids", list(dict.fromkeys([item["provider_id"] for item in audio_sources] + current_audio)))
+            cf.kv_put("video:used_ids", list(dict.fromkeys([item["provider_id"] for item in video_sources] + current_video)))
+
+    if mark_done:
+        set_status(sid, "done", "✅ Night Supercar Reel hazırdır!")
+    print(f"[night_supercar] Done. sid={sid}")
+
 def action_cinematic_generate(sid, mark_done=True, mode="crazy"):
     from ai_comparison import generate_comparison
     from video_sound_fetcher import choose_reel_type, cinematic_script, download_cinematic_assets
@@ -432,6 +530,9 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
     try:
         if post_type == "market":
             return action_market_generate(sid, mark_done=mark_done)
+
+        if post_type == "night_supercar":
+            return action_night_supercar_generate(sid, mark_done=mark_done)
 
         if post_type == "cinematic":
             try:
