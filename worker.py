@@ -41,12 +41,34 @@ def _asset_history():
 
 def _used_audio_ids():
     values = cf.kv_get("audio:used_ids")
-    return [str(value) for value in values] if isinstance(values, list) else []
+    if isinstance(values, list):
+        return [str(value) for value in values]
+    return _pages_asset_ids("audio")
 
 
 def _used_video_ids():
     values = cf.kv_get("video:used_ids")
-    return [str(value) for value in values] if isinstance(values, list) else []
+    if isinstance(values, list):
+        return [str(value) for value in values]
+    return _pages_asset_ids("video")
+
+
+def _pages_asset_ids(kind):
+    password = os.environ.get("ADMIN_PASS", "").strip()
+    if not password:
+        return []
+    try:
+        response = http_req.get(
+            f"{pages_base_url()}/api/asset-history",
+            headers={"X-Admin-Password": password},
+            timeout=20,
+        )
+        response.raise_for_status()
+        values = response.json().get(f"{kind}_ids", [])
+        return [str(value) for value in values] if isinstance(values, list) else []
+    except Exception as exc:
+        print(f"[assets] Pages history read failed for {kind}: {exc}")
+        return []
 
 
 def _fresh_car_asset(sid, query, car_name, output_path, slot, history, selected_assets):
