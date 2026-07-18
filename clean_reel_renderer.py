@@ -89,6 +89,41 @@ def _text_overlay(frame, title, line1="", line2="", tag=""):
     return cv2.cvtColor(np.array(Image.alpha_composite(image, layer).convert("RGB")), cv2.COLOR_RGB2BGR)
 
 
+def _floating_cta_overlay(frame, progress):
+    image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert("RGBA")
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+
+    eased = 0.5 - 0.5 * np.cos(np.pi * max(0.0, min(1.0, progress)))
+    pulse = 0.5 - 0.5 * np.cos(2 * np.pi * max(0.0, min(1.0, progress)))
+    alpha = int(188 + 34 * pulse)
+    y = int(1090 + 34 * np.sin(2 * np.pi * eased))
+
+    text = "DOSTUNA GÖNDƏR"
+    font = _fit(draw, text, FONT_DISPLAY, 86, 830, min_size=56)
+    text_w = int(draw.textlength(text, font=font))
+    x = int(OUT_W + 70 - (OUT_W + text_w + 140) * eased)
+    x = max(70, min(x, OUT_W - text_w - 70))
+    box = (x - 34, y - 66, x + text_w + 34, y + 52)
+    draw.rounded_rectangle(box, radius=34, fill=(5, 8, 12, alpha), outline=(255, 255, 255, 44), width=2)
+    draw.rectangle((box[0] + 24, box[3] - 10, box[2] - 24, box[3] - 4), fill=RED)
+    draw.text((x, y), text, font=font, fill=WHITE, anchor="lm")
+
+    small = "QIYMƏTİ SONRA MÜQAYİSƏ ET"
+    small_font = _fit(draw, small, FONT_BOLD, 33, 770, min_size=24)
+    small_w = int(draw.textlength(small, font=small_font))
+    small_x = int(70 + (OUT_W - small_w - 140) * eased)
+    small_y = y + 86
+    draw.rounded_rectangle(
+        (small_x - 24, small_y - 34, small_x + small_w + 24, small_y + 31),
+        radius=24,
+        fill=(244, 42, 38, int(168 + 22 * pulse)),
+    )
+    draw.text((small_x, small_y), small, font=small_font, fill=WHITE, anchor="lm")
+
+    return cv2.cvtColor(np.array(Image.alpha_composite(image, layer).convert("RGB")), cv2.COLOR_RGB2BGR)
+
+
 def _segment(path, seconds, seed, title, line1="", line2="", tag=""):
     frames = []
     total = int(seconds * FPS)
@@ -97,6 +132,25 @@ def _segment(path, seconds, seed, title, line1="", line2="", tag=""):
         frame = _image_frame(path, 1.0 + 0.045 * progress)
         frame = night._watermark(frame)
         frame = _text_overlay(frame, title, line1, line2, tag)
+        frames.append(frame)
+    return frames
+
+
+def _market_frames(img_path, car, details):
+    frames = []
+    total = int(6.5 * FPS)
+    first_end = int(2.2 * FPS)
+    cta_end = int(4.9 * FPS)
+    title = car.get("name", "AZVSCARS")
+    price = car.get("price_label", "")
+
+    for index in range(total):
+        progress = index / max(1, total - 1)
+        frame = _image_frame(img_path, 1.0 + 0.05 * progress)
+        frame = night._watermark(frame)
+        frame = _text_overlay(frame, title, price, details, "BU PULA DƏYƏR?")
+        if first_end <= index < cta_end:
+            frame = _floating_cta_overlay(frame, (index - first_end) / max(1, cta_end - first_end - 1))
         frames.append(frame)
     return frames
 
@@ -151,8 +205,4 @@ def render_clean_comparison_reel(data, img1_path, img2_path, output_path, audio_
 def render_clean_single_car_reel(car, img_path, output_path, audio_paths=None):
     meta_bits = [str(car.get("year") or ""), car.get("engine", ""), car.get("mileage", "")]
     details = " / ".join(bit for bit in meta_bits if bit)
-    frames = []
-    frames.extend(_segment(img_path, 2.4, "single-a", car.get("name", "AZVSCARS"), car.get("price_label", ""), details, "BAKI MARKET"))
-    frames.extend(_segment(img_path, 2.4, "single-b", car.get("name", "AZVSCARS"), "Real bazar qiyməti", "Saxla və maşın axtaran dosta göndər", "QİYMƏT CHECK"))
-    frames.extend(_segment(img_path, 1.7, "single-c", car.get("name", "AZVSCARS"), car.get("price_label", ""), "@azvscars", "FOLLOW"))
-    return _write(night._join_with_dissolves([frames[:72], frames[72:144], frames[144:]], transition_frames=7), output_path, audio_paths, 2.4)
+    return _write(_market_frames(img_path, car, details), output_path, audio_paths, 2.4)
