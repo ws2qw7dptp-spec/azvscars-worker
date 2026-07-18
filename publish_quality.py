@@ -78,10 +78,7 @@ def _non_question_cta(data, post_type):
 
 def _engagement_goal(post_type):
     profile = profile_for(post_type)
-    return (
-        f"Bu format {profile['primary_goal']}, {profile['secondary_goal']} və "
-        f"{profile['pillar']} üçün optimizasiya olunub."
-    )
+    return f"{profile['primary_goal']} və {profile['secondary_goal']} üçün optimizasiya olunub."
 
 
 def _format_azn(value):
@@ -163,26 +160,26 @@ def build_caption(data, post_type="main", media_type="carousel"):
     car2 = _clean(data.get("car2_name"))
     base = _clean(data.get("caption"))
     question = _question_for(post_type)
-    cta = _non_question_cta(data, post_type)
     buyer = _buyer_angle(data)
     power = f"{car1}: {_clean(data.get('slide2_car1_stat'))} | {car2}: {_clean(data.get('slide2_car2_stat'))}"
     speed = f"0-100: {_clean(data.get('slide3_car1_stat'))} vs {_clean(data.get('slide3_car2_stat'))}"
-    price = f"Bakı qiyməti: {normalize_price_label(data.get('slide4_car1_stat'))} vs {normalize_price_label(data.get('slide4_car2_stat'))}"
-    goal = _engagement_goal(post_type)
+    price = f"Təxmini qiymət müqayisəsi: {normalize_price_label(data.get('slide4_car1_stat'))} vs {normalize_price_label(data.get('slide4_car2_stat'))}"
+    if post_type == "quick":
+        searchable = f"{car1} vs {car2}."
+    elif post_type == "war":
+        searchable = f"{car1} yoxsa {car2}?"
+    else:
+        searchable = f"{car1} və {car2} müqayisəsi."
 
     lines = [
-        base,
+        searchable,
         "",
+        base,
+        price,
         power,
         speed,
-        price,
         buyer,
-        goal,
         question,
-        cta,
-        "Real seçim edənlər üçün: qiymətə yox, gündəlik istifadə, servis və ikinci əl dəyərinə bax.",
-        "",
-        "Təsvir: " + build_alt_text(data, media_type)[:420],
         "",
         " ".join(profile.get("hashtags") or AZ_HASHTAGS),
     ]
@@ -202,11 +199,13 @@ def apply_publish_quality(data, post_type="main", media_type="carousel"):
     enriched["target_audience"] = "Azerbaijan car buyers and car enthusiasts"
     enriched["content_series"] = profile_for(post_type)["series"]
     enriched["posting_profile"] = profile_for(post_type)
+    enriched["cta_text"] = _question_for(post_type)
+    enriched["content_hook"] = enriched.get("battle_title") or f"{enriched.get('car1_name', '')} vs {enriched.get('car2_name', '')}"
     enriched["trust_rules"] = [
         "no_false_hook",
         "short_real_specs",
         "local_baku_context",
-        "comment_question",
+        "single_primary_cta",
         "accessibility_description",
     ]
     return enriched

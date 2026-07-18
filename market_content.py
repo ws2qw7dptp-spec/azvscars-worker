@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+from datetime import datetime
 
 from publish_quality import AZ_HASHTAGS, normalize_price_label
 
@@ -28,11 +29,44 @@ def _spec_value(raw, key):
     return ""
 
 
+def _parse_note_details(note):
+    text = _clean(note)
+    lower = text.lower()
+    price_type = "Elan qiyməti" if "listing" in lower or "elan" in lower else "Bazar aralığı"
+    source_name = "İctimai elan"
+    if "screenshot" in lower:
+        source_name = "İstifadəçi göndərişi"
+    elif "listing" in lower:
+        source_name = "İctimai elan"
+    date_match = re.search(
+        r"(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{0,2},?\s*\d{4}",
+        lower,
+    )
+    source_date = ""
+    if date_match:
+        source_date = date_match.group(0).title()
+    else:
+        month_year = re.search(
+            r"(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}",
+            lower,
+        )
+        if month_year:
+            source_date = month_year.group(0).title()
+    checked_at = datetime.utcnow().strftime("%Y-%m-%d")
+    return {
+        "price_type": price_type,
+        "source_name": source_name,
+        "source_date": source_date,
+        "checked_at": checked_at,
+    }
+
+
 def normalize_market_car(raw):
     year = int(raw.get("year") or _spec_value(raw, "year") or 0) or None
     engine = _clean(raw.get("engine") or _spec_value(raw, "engine"))
     mileage = _km_label(raw.get("mileage_km") or _spec_value(raw, "mileage"))
     price_label = normalize_price_label(raw.get("price_azn") or raw.get("price"))
+    details = _parse_note_details(raw.get("note"))
     return {
         "name": _clean(raw.get("name")),
         "year": year,
@@ -41,6 +75,11 @@ def normalize_market_car(raw):
         "price_label": price_label,
         "search_query": _clean(raw.get("search_query") or raw.get("name")),
         "note": _clean(raw.get("note")),
+        "source": _clean(raw.get("source")),
+        "source_name": _clean(raw.get("source_name")) or details["source_name"],
+        "source_date": _clean(raw.get("source_date")) or details["source_date"],
+        "price_type": _clean(raw.get("price_type")) or details["price_type"],
+        "checked_at": _clean(raw.get("checked_at")) or details["checked_at"],
     }
 
 
@@ -65,8 +104,8 @@ def pick_market_batch(seed, count=3):
 
 def build_market_caption(cars):
     single = len(cars) == 1
-    opener = "Bakıda bu maşın hazırda təxminən bu qiymətə çıxır." if single else "Bakıda bu maşınlar hazırda təxminən bu qiymətə çıxır."
-    utility = "Qiyməti saxla ki, real seçim vaxtı yenidən baxa biləsən." if single else "Qiymətləri saxla ki, real seçim vaxtı yenidən müqayisə edə biləsən."
+    opener = "Bu pula dəyər?" if single else "Bakıda bu qiymətlər normaldır?"
+    utility = "Maşın baxırsansa bunu yadda saxla." if single else "Bu müqayisəni yadda saxla."
     lines = [opener, ""]
     for car in cars:
         meta_bits = [str(car["year"]) if car.get("year") else "", car.get("engine", ""), car.get("mileage", "")]
@@ -74,11 +113,15 @@ def build_market_caption(cars):
         lines.append(f"{car['name']} — {car['price_label']}")
         if meta:
             lines.append(meta)
+        lines.append(f"Qiymət tipi: {car.get('price_type') or 'Elan qiyməti'}")
+        source_name = car.get("source_name") or car.get("source") or "Mənbə qeyd olunmayıb"
+        source_date = car.get("source_date") or car.get("checked_at") or "Tarix yoxdur"
+        lines.append(f"Mənbə: {source_name}")
+        lines.append(f"Yoxlanılıb: {source_date}")
     lines.extend([
         "",
         utility,
-        "Bu qiymətə alınar, yoxsa pass? Səbəbini yaz." if single else "Sən hansını seçərdin və niyə?",
-        "Reel-i maşın axtaran dosta göndər: bu deal ona uyğundur?" if single else "Reel-i maşın sevən dosta göndər: ikiniz də eyni maşını seçirsiniz?",
+        "Bu qiymətə alardın, yoxsa keçərdin? Səbəbini yaz." if single else "Sən hansını seçərdin və niyə?",
         "",
         " ".join(AZ_HASHTAGS + ["#masinqiymeti", "#turboaz", "#bakimasinbazari"]),
     ])

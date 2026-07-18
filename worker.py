@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import cloudflare_storage as cf
+from content_audit import build_quality_report
 from publish_quality import apply_publish_quality
 from posting_plan import metadata_fields
 
@@ -334,6 +335,17 @@ def action_market_generate(sid, mark_done=True):
 
         caption = build_market_caption(cars)
         alt_text = build_market_alt_text(cars)
+        audit_input = {
+            "car1_name": cars[0]["name"],
+            "car2_name": "",
+            "caption": caption,
+            "market_cars": cars,
+            "battle_title": "BU PULA DƏYƏR?",
+        }
+        quality_report = build_quality_report(audit_input, "market", "reel", selected_assets)
+        if not quality_report["auto_publish_allowed"]:
+            raise RuntimeError("Market quality gate blocked publish: " + " | ".join(quality_report["issues"]))
+
         meta_fields = _metadata("market", "reel")
         meta = {
             "sid": sid,
@@ -343,6 +355,19 @@ def action_market_generate(sid, mark_done=True):
             "posting_time_azt": meta_fields["posting_time_azt"],
             "posting_label": meta_fields["posting_label"],
             "metadata_version": meta_fields["metadata_version"],
+            "analytics": {
+                **meta_fields["analytics_template"],
+                "content_id": sid,
+                "pillar": meta_fields["publish_strategy"]["pillar"],
+                "hook_text": "BU PULA DƏYƏR?",
+                "duration_seconds": "",
+                "video_style": meta_fields["publish_strategy"]["visual_family"],
+                "source_type": "public_listing",
+                "rights_status": quality_report["rights_status"],
+                "model_1": cars[0]["name"],
+                "price_if_applicable": cars[0]["price_label"],
+                "experimental_variable": "single_car_market_reel",
+            },
             "car1_name": cars[0]["name"],
             "car2_name": cars[1]["name"] if len(cars) > 1 else "Baku bazarı",
             "caption": caption,
@@ -358,6 +383,7 @@ def action_market_generate(sid, mark_done=True):
                 "audio_sources": audio_assets,
             },
             "publish_strategy": meta_fields["publish_strategy"],
+            "quality_report": quality_report,
             "source_assets": selected_assets,
             "slide_urls": {},
             "reel_url": reel_url or cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
@@ -429,12 +455,22 @@ def action_night_supercar_generate(sid, mark_done=True):
             normalized["used_at"] = used_at
             video_sources.append(normalized)
         source_assets = video_sources + audio_sources
+        audit_input = {
+            "car1_name": "Night Supercars",
+            "car2_name": "",
+            "caption": "",
+            "battle_title": "GECƏ SUPERCAR",
+        }
+        quality_report = build_quality_report(audit_input, "night_supercar", "reel", source_assets)
+        if not quality_report["auto_publish_allowed"]:
+            raise RuntimeError("Night supercar quality gate blocked publish: " + " | ".join(quality_report["issues"]))
+
         meta_fields = _metadata("night_supercar", "reel")
         caption = (
-            "Gecə səsi açıq saxla. 🏁\n\n"
-            "Supercar, yarış və sərgi kadrlarından hansını bir də izlədin? "
-            "Maşın sevən dosta göndər və ən güclü səsi şərhdə yaz.\n\n"
-            "FOLLOW @azvscars\n\n"
+            "Gecə supercar seçimi.\n\n"
+            "Bu dəfə yarış, sərgi və supercar kadrlarından ən güclü anları topladıq. "
+            "Səsi aç və hansı səhnənin daha çox saxladığını yaz.\n\n"
+            "Dostuna göndər ki, ən yaxşı səsi o da seçsin.\n\n"
             "#azvscars #supercar #racing #carshow #baku #azerbaijan #cars"
         )
         meta = {
@@ -445,6 +481,18 @@ def action_night_supercar_generate(sid, mark_done=True):
             "posting_time_azt": meta_fields["posting_time_azt"],
             "posting_label": meta_fields["posting_label"],
             "metadata_version": meta_fields["metadata_version"],
+            "analytics": {
+                **meta_fields["analytics_template"],
+                "content_id": sid,
+                "pillar": meta_fields["publish_strategy"]["pillar"],
+                "hook_text": "GECƏ SUPERCAR",
+                "video_style": meta_fields["publish_strategy"]["visual_family"],
+                "voice_type": "matched_supercar_engine",
+                "source_type": "licensed_video_feed",
+                "rights_status": quality_report["rights_status"],
+                "model_1": "Night Supercars",
+                "experimental_variable": "3_clip_unique_audio",
+            },
             "car1_name": "Night Supercars",
             "car2_name": "Racing & Exhibition",
             "caption": caption,
@@ -457,6 +505,7 @@ def action_night_supercar_generate(sid, mark_done=True):
                 "end_card": "FOLLOW @azvscars",
             },
             "publish_strategy": meta_fields["publish_strategy"],
+            "quality_report": quality_report,
             "source_assets": source_assets,
             "slide_urls": {},
             "reel_url": f"{pages_base_url()}/api/image/{sid}/reel.mp4" if use_pages_ingest else cf.r2_upload_file(local_reel, f"{sid}/reel.mp4", "video/mp4"),
@@ -598,6 +647,9 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
         data = generate_comparison(post_type=post_type)
         media_type_for_quality = "reel" if make_reel else "carousel"
         data = apply_publish_quality(data, post_type=post_type, media_type=media_type_for_quality)
+        quality_report = build_quality_report(data, post_type, media_type_for_quality)
+        if not quality_report["auto_publish_allowed"]:
+            raise RuntimeError("Quality gate blocked publish: " + " | ".join(quality_report["issues"]))
 
         set_status(sid, "running", f"🖼 Şəkillər yüklənir: {data['car1_name']} / {data['car2_name']}")
 
@@ -665,6 +717,21 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 "posting_time_azt": meta_fields["posting_time_azt"],
                 "posting_label": meta_fields["posting_label"],
                 "metadata_version": meta_fields["metadata_version"],
+                "analytics": {
+                    **meta_fields["analytics_template"],
+                    "content_id": sid,
+                    "pillar": meta_fields["publish_strategy"]["pillar"],
+                    "hook_text": data.get("content_hook", ""),
+                    "cta_type": meta_fields["publish_strategy"]["primary_goal"],
+                    "video_style": meta_fields["publish_strategy"]["visual_family"],
+                    "voice_type": "matched_engine_audio" if make_reel else "none",
+                    "source_type": "fresh_car_images",
+                    "rights_status": quality_report["rights_status"],
+                    "model_1": data["car1_name"],
+                    "model_2": data["car2_name"],
+                    "price_if_applicable": f"{data.get('slide4_car1_stat', '')} vs {data.get('slide4_car2_stat', '')}",
+                    "experimental_variable": meta_fields["publish_strategy"]["cover_family"],
+                },
                 "car1_name":  data["car1_name"],
                 "car2_name":  data["car2_name"],
                 "flip1":      flip1,
@@ -674,6 +741,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                 "image_description": data.get("image_description", ""),
                 "data":       data,
                 "publish_strategy": meta_fields["publish_strategy"],
+                "quality_report": quality_report,
                 "source_assets": selected_assets,
                 "slide_urls": slide_urls,
                 "reel_url":   reel_url,
