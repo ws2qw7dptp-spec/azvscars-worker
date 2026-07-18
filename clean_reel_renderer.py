@@ -58,6 +58,43 @@ def _image_frame(path, zoom):
     return cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
 
+def _market_image_frame(path, progress):
+    with Image.open(path) as source:
+        source = source.convert("RGB")
+        source = ImageEnhance.Color(source).enhance(1.08)
+        source = ImageEnhance.Contrast(source).enhance(1.08)
+
+        background = ImageOps.fit(source, (OUT_W, OUT_H), method=Image.Resampling.LANCZOS)
+        background = background.filter(ImageFilter.GaussianBlur(26))
+        background = ImageEnhance.Brightness(background).enhance(0.58)
+        background = ImageEnhance.Contrast(background).enhance(1.12).convert("RGBA")
+
+        max_w = 1008
+        max_h = 1110
+        subtle_zoom = 1.0 + 0.018 * progress
+        foreground = ImageOps.contain(
+            source,
+            (int(max_w * subtle_zoom), int(max_h * subtle_zoom)),
+            method=Image.Resampling.LANCZOS,
+        ).convert("RGBA")
+
+        shadow = Image.new("RGBA", foreground.size, (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(shadow)
+        shadow_draw.rounded_rectangle(
+            (8, 8, foreground.width - 8, foreground.height - 8),
+            radius=34,
+            fill=(0, 0, 0, 136),
+        )
+        shadow = shadow.filter(ImageFilter.GaussianBlur(28))
+
+        canvas = background
+        x = (OUT_W - foreground.width) // 2
+        y = max(188, (1286 - foreground.height) // 2)
+        canvas.alpha_composite(shadow, (x, y + 22))
+        canvas.alpha_composite(foreground, (x, y))
+        return cv2.cvtColor(np.array(canvas.convert("RGB")), cv2.COLOR_RGB2BGR)
+
+
 def _bottom_fade(layer):
     draw = ImageDraw.Draw(layer)
     for y in range(1120, OUT_H):
@@ -146,7 +183,7 @@ def _market_frames(img_path, car, details):
 
     for index in range(total):
         progress = index / max(1, total - 1)
-        frame = _image_frame(img_path, 1.0 + 0.05 * progress)
+        frame = _market_image_frame(img_path, progress)
         frame = night._watermark(frame)
         frame = _text_overlay(frame, title, price, details, "BU PULA DƏYƏR?")
         if first_end <= index < cta_end:
