@@ -152,8 +152,8 @@ def _mux_car_audio(video_path, audio_paths, output_path, clip_seconds, duration)
 
 
 def render_night_supercar_reel(video_paths, audio_paths, output_path, seed, clip_seconds=2.8):
-    if len(video_paths) < 3 or len(audio_paths) < 3:
-        raise ValueError("Night supercar Reel requires three videos and three fresh car sounds.")
+    if len(video_paths) < 3:
+        raise ValueError("Night supercar Reel requires three videos.")
     segments = [
         _clip_frames(path, clip_seconds, f"{seed}:{index}")
         for index, path in enumerate(video_paths[:3])
@@ -166,5 +166,13 @@ def render_night_supercar_reel(video_paths, audio_paths, output_path, seed, clip
     with tempfile.TemporaryDirectory() as tmp:
         silent_path = os.path.join(tmp, "night_supercar_silent.mp4")
         reel_renderer._encode_frames(iter(frames), silent_path, FPS, OUT_W, OUT_H)
-        _mux_car_audio(silent_path, audio_paths[:3], output_path, clip_seconds, len(frames) / FPS)
+        valid_audio = [path for path in (audio_paths or []) if path and os.path.exists(path)]
+        if len(valid_audio) >= 3:
+            _mux_car_audio(silent_path, valid_audio[:3], output_path, clip_seconds, len(frames) / FPS)
+        else:
+            music = reel_renderer.select_audio_file(output_path)
+            if music:
+                reel_renderer._mux_audio(silent_path, music, output_path, len(frames) / FPS)
+            else:
+                os.replace(silent_path, output_path)
     return output_path

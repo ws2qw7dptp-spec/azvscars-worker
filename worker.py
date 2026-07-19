@@ -325,8 +325,11 @@ def action_market_generate(sid, mark_done=True):
             [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
         )
         if len(audio_paths) != len(cars):
-            raise RuntimeError("Fresh startup sound was not found for every market card; publish cancelled to prevent audio repetition.")
-        selected_assets.extend(audio_assets)
+            print(f"[market] Fresh audio incomplete ({len(audio_paths)}/{len(cars)}); continuing with fallback soundtrack.")
+            audio_paths = []
+            audio_assets = []
+        else:
+            selected_assets.extend(audio_assets)
 
         set_status(sid, "running", "🎬 Clean market reel render edilir…")
         local_reel = os.path.join(tmp, "reel.mp4")
@@ -441,7 +444,9 @@ def action_night_supercar_generate(sid, mark_done=True):
             [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
         )
         if len(audio_paths) != 3:
-            raise RuntimeError("Three fresh supercar sounds were not found; publish cancelled to prevent repetition.")
+            print(f"[night_supercar] Fresh audio incomplete ({len(audio_paths)}/3); continuing with fallback soundtrack.")
+            audio_paths = []
+            audio_sources = []
 
         set_status(sid, "running", "🎬 Night Supercar Reel render edilir…")
         local_reel = os.path.join(tmp, "reel.mp4")
@@ -641,7 +646,7 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
             return action_night_supercar_generate(sid, mark_done=mark_done)
 
         if post_type == "cinematic":
-            return action_night_supercar_generate(sid, mark_done=mark_done)
+            return action_cinematic_generate(sid, mark_done=mark_done)
 
         set_status(sid, "running", "☁️ AI ilə müqayisə yaradılır…")
         data = generate_comparison(post_type=post_type)
@@ -697,8 +702,11 @@ def action_generate(sid, post_type, make_reel, mark_done=True):
                     [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
                 )
                 if len(audio_paths) != 2:
-                    raise RuntimeError("Two fresh car sounds were not found; publish cancelled to prevent repeated or weak audio.")
-                selected_assets.extend(audio_assets)
+                    print(f"[generate] Fresh audio incomplete ({len(audio_paths)}/2) for sid={sid}; continuing with fallback soundtrack.")
+                    audio_paths = []
+                    audio_assets = []
+                else:
+                    selected_assets.extend(audio_assets)
 
                 set_status(sid, "running", "🎬 Clean comparison reel render edilir…")
                 local_reel = os.path.join(tmp, "reel.mp4")

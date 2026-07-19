@@ -109,7 +109,10 @@ jobs:
       - name: Run Automated Post
         run: |
           SID="auto$(date +%Y%m%d%H%M%S)"
-          MAKE_REEL="true"
+          MAKE_REEL="false"
+          if [[ "$POST_TYPE" == "quick" || "$POST_TYPE" == "war" || "$POST_TYPE" == "night" || "$POST_TYPE" == "cinematic" || "$POST_TYPE" == "market" || "$POST_TYPE" == "night_supercar" ]]; then
+            MAKE_REEL="true"
+          fi
           python worker.py \
             --action generate \
             --sid "$SID" \
