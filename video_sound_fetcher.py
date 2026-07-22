@@ -658,6 +658,8 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             "laugh", "voice", "talk", "speech", "crash", "alarm", "horn", "siren", "screech",
             "tire", "tyre", "skid", "traffic", "rain", "wind", "door", "beep", "fan", "loop",
             "wheel", "gravel", "burnout", "drift", "sliding", "spin", "spinning", "dirt",
+            "hammer", "hit", "impact", "metal", "vent", "air vent", "factory", "machine", "industrial",
+            "pipe", "clang", "bang", "thud", "knock", "tool", "workshop",
         )):
             continue
         jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
