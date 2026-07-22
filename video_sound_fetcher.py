@@ -39,15 +39,15 @@ VIDEO_QUERIES = {
 }
 
 NIGHT_SUPERCAR_QUERIES = [
-    "Lamborghini exterior detail no people",
-    "Ferrari exhaust close up no people",
-    "McLaren supercar exterior no people",
-    "Porsche GT3 exhaust no people",
-    "exotic supercar showroom car only",
-    "supercar exhibition exterior no people",
-    "Bugatti hypercar exterior no people",
-    "Pagani hypercar detail no people",
-    "race car pit lane car only no people",
+    "Lamborghini exhaust close up car only",
+    "Ferrari wheel close up car only",
+    "McLaren supercar exterior detail car only",
+    "Porsche GT3 headlight close up car only",
+    "exotic supercar showroom empty car only",
+    "supercar rolling shot car only",
+    "Bugatti hypercar detail car only",
+    "Pagani hypercar exterior detail car only",
+    "supercar tail light close up car only",
 ]
 
 SUPERCAR_CONTENT_TERMS = (
@@ -61,6 +61,8 @@ HUMAN_VIDEO_TERMS = (
     "person", "people", "human", "man", "men", "male", "boy", "driver", "owner",
     "influencer", "host", "presenter", "interview", "vlog", "lifestyle", "couple",
     "wedding", "bride", "face", "body", "walk", "walking", "standing", "posing",
+    "crowd", "spectator", "audience", "grandstand", "fans", "event",
+    "pit-lane", "pitlane", "parade", "festival", "meetup",
 )
 
 
