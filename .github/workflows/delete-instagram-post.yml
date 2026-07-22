@@ -1,0 +1,35 @@
+name: Delete Instagram Post
+
+on:
+  workflow_dispatch:
+    inputs:
+      post_id:
+        description: "Published Instagram media ID to delete"
+        required: true
+        type: string
+
+jobs:
+  delete-post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
+      PAGES_BASE_URL: ${{ secrets.PAGES_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Delete Post
+        run: python delete_instagram_post.py --post_id "${{ github.event.inputs.post_id }}"

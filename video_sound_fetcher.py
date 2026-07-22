@@ -34,15 +34,15 @@ VIDEO_QUERIES = {
 }
 
 NIGHT_SUPERCAR_QUERIES = [
-    "Lamborghini supercar close up",
-    "Ferrari supercar close up",
-    "McLaren supercar close up",
-    "Porsche sports car close up",
-    "exotic supercar showroom",
-    "supercar exhibition close up",
-    "Bugatti hypercar close up",
-    "Pagani hypercar close up",
-    "race car pit lane close up",
+    "Lamborghini exterior detail no people",
+    "Ferrari exhaust close up no people",
+    "McLaren supercar exterior no people",
+    "Porsche GT3 exhaust no people",
+    "exotic supercar showroom car only",
+    "supercar exhibition exterior no people",
+    "Bugatti hypercar exterior no people",
+    "Pagani hypercar detail no people",
+    "race car pit lane car only no people",
 ]
 
 SUPERCAR_CONTENT_TERMS = (
@@ -51,10 +51,22 @@ SUPERCAR_CONTENT_TERMS = (
     "racing-car", "exotic-car", "hypercar",
 )
 
+HUMAN_VIDEO_TERMS = (
+    "woman", "women", "girl", "girls", "female", "lady", "model", "fashion", "portrait",
+    "person", "people", "human", "man", "men", "male", "boy", "driver", "owner",
+    "influencer", "host", "presenter", "interview", "vlog", "lifestyle", "couple",
+    "wedding", "bride", "face", "body", "walk", "walking", "standing", "posing",
+)
+
 
 def _is_supercar_result(*values):
     haystack = " ".join(str(value or "").lower().replace("_", "-") for value in values)
     return any(term in haystack for term in SUPERCAR_CONTENT_TERMS)
+
+
+def _has_human_video_hint(*values):
+    haystack = " ".join(str(value or "").lower().replace("_", "-") for value in values)
+    return any(term in haystack for term in HUMAN_VIDEO_TERMS)
 
 CAR_SPECIFIC_TYPES = {
     "sound_battle", "night_pov", "hidden_features", "owner_experience",
@@ -396,6 +408,8 @@ def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="",
         provider_id = f"pexels:{item.get('id')}"
         if provider_id in excluded_ids:
             continue
+        if _has_human_video_hint(item.get("url"), (item.get("user") or {}).get("name")):
+            continue
         if require_supercar and not _is_supercar_result(item.get("url")):
             continue
         files = item.get("video_files", [])
@@ -450,6 +464,8 @@ def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed=""
     for item in res.json().get("hits", []):
         provider_id = f"pixabay:{item.get('id')}"
         if provider_id in excluded_ids:
+            continue
+        if _has_human_video_hint(item.get("pageURL"), item.get("tags"), item.get("user")):
             continue
         if require_supercar and not _is_supercar_result(item.get("pageURL"), item.get("tags")):
             continue
@@ -647,10 +663,10 @@ def _startup_queries(car_name, engine, profile=None):
         f"{brand} exhaust rev" if brand else "",
     ]
     engine_queries = {
-        "v12": ["v12 supercar rev", "v12 engine start", "v12 exhaust", "supercar rev"],
-        "v10": ["v10 supercar rev", "v10 engine start", "v10 exhaust", "supercar rev"],
-        "v8": ["v8 engine rev", "v8 cold start", "v8 exhaust", "sports car rev"],
-        "v6": ["v6 engine rev", "v6 exhaust", "sports car acceleration"],
+        "v12": ["v12 supercar loud rev", "v12 straight pipe exhaust", "v12 race exhaust", "lamborghini flames rev", "supercar tunnel flyby"],
+        "v10": ["v10 supercar loud rev", "v10 race exhaust", "v10 straight pipe", "lamborghini gallardo rev", "supercar flyby exhaust"],
+        "v8": ["v8 loud rev", "v8 straight pipe cold start", "v8 race exhaust", "amg v8 revs", "muscle car loud exhaust"],
+        "v6": ["v6 loud rev", "v6 race exhaust", "sports car acceleration"],
         "i6": ["inline six engine rev", "straight six exhaust", "toyota supra engine rev", "sports car smooth rev"],
     }.get(engine_class, ["sports car engine start", "sports car exhaust", "car acceleration"])
     generic = ["clean car rev", "smooth car acceleration", "engine start"]
