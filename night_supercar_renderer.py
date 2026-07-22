@@ -51,6 +51,8 @@ def _watermark(frame):
 
 
 def _clip_frames(path, seconds, seed):
+    started = cv2.getTickCount()
+    tick_freq = cv2.getTickFrequency() or 1
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         return []
@@ -63,6 +65,8 @@ def _clip_frames(path, seconds, seed):
     frames = []
     total = int(seconds * FPS)
     for index in range(total):
+        if (cv2.getTickCount() - started) / tick_freq > 18:
+            break
         cap.set(cv2.CAP_PROP_POS_MSEC, (start_seconds + index / FPS) * 1000)
         ok, frame = cap.read()
         if not ok:
@@ -146,7 +150,7 @@ def _mux_car_audio(video_path, audio_paths, output_path, clip_seconds, duration)
         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
         "-t", f"{duration:.3f}", "-movflags", "+faststart", output_path,
     ])
-    completed = subprocess.run(command, capture_output=True)
+    completed = subprocess.run(command, capture_output=True, timeout=45)
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.decode("utf-8", errors="replace")[-2000:])
 

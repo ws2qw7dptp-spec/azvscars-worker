@@ -119,6 +119,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Worker
+        timeout-minutes: 12
         run: |
           python worker.py \
             --action "${{ github.event.inputs.action }}" \
