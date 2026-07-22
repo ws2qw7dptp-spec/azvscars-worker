@@ -449,6 +449,7 @@ def action_night_supercar_generate(sid, mark_done=True):
             os.path.join(tmp, "night_supercar_audio"),
             sid,
             [{"media_type": "audio", "provider_id": value} for value in _used_audio_ids()],
+            max_search_seconds=55,
         )
         if len(audio_paths) != 3:
             print(f"[night_supercar] Fresh audio incomplete ({len(audio_paths)}/3); continuing with fallback soundtrack.")

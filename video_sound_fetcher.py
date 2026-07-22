@@ -475,7 +475,7 @@ def _download_freesound_sfx(output_dir, limit):
     return found
 
 
-def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
+def download_market_startup_sounds(cars, output_dir, seed, asset_history=None, max_search_seconds=120):
     """Fetch one fresh CC0 startup/rev sound for each market card."""
     token = os.environ.get("FREESOUND_API_KEY", "").strip()
     if not token:
@@ -490,14 +490,20 @@ def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
     }
     paths = []
     sources = []
+    deadline = time.monotonic() + max_search_seconds
 
     for index, car in enumerate(cars):
+        if time.monotonic() >= deadline:
+            print("[audio] Search deadline reached before all car sounds were matched.")
+            break
         car_name = str(car.get("name") or "car")
         engine = str(car.get("engine") or "")
         profile = _audio_profile(car_name, engine)
         queries = _startup_queries(car_name, engine, profile)
         choices = {}
         for query_index, query in enumerate(queries):
+            if time.monotonic() >= deadline:
+                break
             candidate = _search_fresh_freesound(
                 query,
                 token,
@@ -513,6 +519,8 @@ def download_market_startup_sounds(cars, output_dir, seed, asset_history=None):
         reused_fallback = False
         if not choices:
             for query_index, query in enumerate(queries):
+                if time.monotonic() >= deadline:
+                    break
                 candidate = _search_fresh_freesound(
                     query,
                     token,
@@ -624,11 +632,11 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             "filter": 'duration:[1.2 TO 10] license:"Creative Commons 0"',
             "sort": "rating_desc",
             "group_by_pack": "1",
-            "page_size": 30,
+            "page_size": 12,
             "fields": "id,name,previews,license,duration,username,url,tags,avg_rating,num_ratings",
         },
         headers={"Authorization": f"Token {token}"},
-        timeout=25,
+        timeout=12,
     )
     res.raise_for_status()
     candidates = []
