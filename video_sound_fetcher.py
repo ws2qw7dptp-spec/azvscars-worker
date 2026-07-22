@@ -338,10 +338,42 @@ def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_vi
             except Exception as exc:
                 errors.append(f"{provider.__name__}:{query}:{exc}")
 
+    relaxed_fallback = False
+    if not videos and time.monotonic() < deadline:
+        relaxed_fallback = True
+        for query_index, query in enumerate(queries[:4]):
+            if len(videos) >= max_videos or time.monotonic() >= deadline:
+                break
+            for provider in (_download_pexels_video, _download_pixabay_video):
+                if time.monotonic() >= deadline:
+                    errors.append(f"deadline_relaxed:{query}")
+                    break
+                try:
+                    item = provider(
+                        query,
+                        out,
+                        len(videos),
+                        excluded_ids=excluded,
+                        seed=f"{seed}:relaxed:{query_index}:{provider.__name__}",
+                        require_supercar=False,
+                    )
+                    if not item:
+                        continue
+                    provider_id = f"{item['provider']}:{item['id']}"
+                    excluded.add(provider_id)
+                    item["media_type"] = "video"
+                    item["provider_id"] = provider_id
+                    item["relaxed_supercar_fallback"] = True
+                    videos.append(item)
+                    break
+                except Exception as exc:
+                    errors.append(f"relaxed:{provider.__name__}:{query}:{exc}")
+
     return {
         "videos": [item["path"] for item in videos],
         "sources": [{k: v for k, v in item.items() if k != "path"} for item in videos],
         "deadline_reached": time.monotonic() >= deadline,
+        "relaxed_fallback": relaxed_fallback,
         "errors": errors[-8:],
     }
 
