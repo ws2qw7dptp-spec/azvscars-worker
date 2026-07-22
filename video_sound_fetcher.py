@@ -383,8 +383,9 @@ def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="",
             candidates.append((score, item, file_info))
     for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
         path = output_dir / f"pexels_{index}.mp4"
-        max_bytes = (42 if require_supercar else 80) * 1024 * 1024
-        if _download_file(file_info["link"], path, max_bytes=max_bytes):
+        max_bytes = (28 if require_supercar else 80) * 1024 * 1024
+        max_seconds = 24 if require_supercar else 45
+        if _download_file(file_info["link"], path, max_bytes=max_bytes, max_seconds=max_seconds):
             return {
                 "path": str(path), "provider": "pexels", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("url", ""),
@@ -432,8 +433,9 @@ def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed=""
             candidates.append((score, item, file_info))
     for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
         path = output_dir / f"pixabay_{index}.mp4"
-        max_bytes = (42 if require_supercar else 80) * 1024 * 1024
-        if _download_file(file_info["url"], path, max_bytes=max_bytes):
+        max_bytes = (28 if require_supercar else 80) * 1024 * 1024
+        max_seconds = 24 if require_supercar else 45
+        if _download_file(file_info["url"], path, max_bytes=max_bytes, max_seconds=max_seconds):
             return {
                 "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("pageURL", ""),
@@ -733,8 +735,9 @@ def _local_sfx_files(limit):
     return [str(p) for p in files[:limit]]
 
 
-def _download_file(url, path, max_bytes):
-    with requests.get(url, stream=True, timeout=45) as res:
+def _download_file(url, path, max_bytes, max_seconds=45):
+    started = time.monotonic()
+    with requests.get(url, stream=True, timeout=(8, 12)) as res:
         res.raise_for_status()
         total = 0
         with open(path, "wb") as f:
@@ -742,7 +745,7 @@ def _download_file(url, path, max_bytes):
                 if not chunk:
                     continue
                 total += len(chunk)
-                if total > max_bytes:
+                if total > max_bytes or time.monotonic() - started > max_seconds:
                     path.unlink(missing_ok=True)
                     return False
                 f.write(chunk)
