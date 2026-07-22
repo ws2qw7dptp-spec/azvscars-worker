@@ -808,8 +808,11 @@ def _video_has_human_content(path):
         if hasattr(cv2, "HOGDescriptor") and hasattr(cv2, "HOGDescriptor_getDefaultPeopleDetector"):
             hog = cv2.HOGDescriptor()
             hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-        face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        upper_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_upperbody.xml")
+        face_detector = None
+        upper_detector = None
+        if hasattr(cv2, "CascadeClassifier") and hasattr(cv2, "data"):
+            face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+            upper_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_upperbody.xml")
         for ratio in sample_positions:
             if frame_count > 0:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, min(frame_count - 1, int(frame_count * ratio))))
@@ -818,12 +821,14 @@ def _video_has_human_content(path):
                 continue
             frame = _resize_for_detection(frame)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=4, minSize=(34, 34))
-            if len(faces):
-                return True
-            upper = upper_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=5, minSize=(48, 72))
-            if len(upper):
-                return True
+            if face_detector is not None and not face_detector.empty():
+                faces = face_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=4, minSize=(34, 34))
+                if len(faces):
+                    return True
+            if upper_detector is not None and not upper_detector.empty():
+                upper = upper_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=5, minSize=(48, 72))
+                if len(upper):
+                    return True
             if hog is not None:
                 boxes, weights = hog.detectMultiScale(frame, winStride=(8, 8), padding=(8, 8), scale=1.05)
                 if any(float(weight) >= 0.55 for weight in weights):
