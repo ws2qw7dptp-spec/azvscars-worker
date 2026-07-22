@@ -762,6 +762,8 @@ def _reject_non_car_audio(name_and_tags):
         "pipe", "clang", "bang", "thud", "knock", "tool", "workshop", "bus", "truck", "lorry",
         "motorcycle", "motorbike", "bike", "scooter", "tractor", "lawn", "mower", "chainsaw",
         "generator", "diesel", "train", "boat", "plane", "airplane", "helicopter",
+        "dialogue", "dialog", "npc", "farm", "ambient", "ambience", "conversation", "people",
+        "man ", "woman ", "male ", "female ", "character", "game asset",
     )
     return any(term in name_and_tags for term in rejected_terms)
 

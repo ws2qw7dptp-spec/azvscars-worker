@@ -64,16 +64,18 @@ def _clip_frames(path, seconds, seed):
     start_seconds = available * (0.12 + ratio * 0.76)
     frames = []
     total = int(seconds * FPS)
-    for index in range(total):
-        if (cv2.getTickCount() - started) / tick_freq > 18:
+    cap.set(cv2.CAP_PROP_POS_MSEC, start_seconds * 1000)
+    while len(frames) < total:
+        if (cv2.getTickCount() - started) / tick_freq > 12:
             break
-        cap.set(cv2.CAP_PROP_POS_MSEC, (start_seconds + index / FPS) * 1000)
         ok, frame = cap.read()
         if not ok:
             break
         frame = _cover(frame)
         frames.append(_watermark(frame))
     cap.release()
+    if frames and len(frames) < total:
+        frames.extend([frames[-1].copy() for _ in range(total - len(frames))])
     return frames
 
 
