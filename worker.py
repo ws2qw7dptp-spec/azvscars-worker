@@ -520,6 +520,7 @@ def action_night_supercar_generate(sid, mark_done=True):
                 "audio_sources": audio_sources,
                 "video_fallback_note": video_fallback_note,
                 "fresh_video_count": len(media["videos"]),
+                "video_deadline_reached": bool(media.get("deadline_reached")),
                 "has_time_overlay": False,
                 "end_card": "FOLLOW @azvscars",
             },

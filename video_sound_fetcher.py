@@ -295,7 +295,7 @@ def download_cinematic_assets(reel_type, output_dir, max_videos=3, max_sfx=3, ca
     }
 
 
-def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_videos=3):
+def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_videos=3, max_search_seconds=95):
     """Download fresh supercar/racing/exhibition clips with provider-level deduplication."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -304,14 +304,18 @@ def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_vi
     random.Random(seed).shuffle(queries)
     videos = []
     errors = []
+    deadline = time.monotonic() + max_search_seconds
 
     for query_index, query in enumerate(queries):
-        if len(videos) >= max_videos:
+        if len(videos) >= max_videos or time.monotonic() >= deadline:
             break
         providers = [_download_pexels_video, _download_pixabay_video]
         if int(hashlib.sha256(f"{seed}:{query_index}".encode()).hexdigest()[:2], 16) % 2:
             providers.reverse()
         for provider in providers:
+            if time.monotonic() >= deadline:
+                errors.append(f"deadline:{query}")
+                break
             try:
                 item = provider(
                     query,
@@ -337,6 +341,7 @@ def download_night_supercar_assets(output_dir, seed, used_video_ids=None, max_vi
     return {
         "videos": [item["path"] for item in videos],
         "sources": [{k: v for k, v in item.items() if k != "path"} for item in videos],
+        "deadline_reached": time.monotonic() >= deadline,
         "errors": errors[-8:],
     }
 
@@ -347,9 +352,9 @@ def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="",
         return None
     res = requests.get(
         "https://api.pexels.com/videos/search",
-        params={"query": query, "per_page": 8, "orientation": "portrait", "size": "medium"},
+        params={"query": query, "per_page": 5 if require_supercar else 8, "orientation": "portrait", "size": "medium"},
         headers={"Authorization": key},
-        timeout=20,
+        timeout=12 if require_supercar else 20,
     )
     res.raise_for_status()
     videos = res.json().get("videos", [])
@@ -378,7 +383,8 @@ def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="",
             candidates.append((score, item, file_info))
     for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
         path = output_dir / f"pexels_{index}.mp4"
-        if _download_file(file_info["link"], path, max_bytes=80 * 1024 * 1024):
+        max_bytes = (42 if require_supercar else 80) * 1024 * 1024
+        if _download_file(file_info["link"], path, max_bytes=max_bytes):
             return {
                 "path": str(path), "provider": "pexels", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("url", ""),
@@ -400,10 +406,10 @@ def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed=""
             "q": query,
             "video_type": "film",
             "safesearch": "true",
-            "per_page": 10,
+            "per_page": 6 if require_supercar else 10,
             "order": "popular",
         },
-        timeout=20,
+        timeout=12 if require_supercar else 20,
     )
     res.raise_for_status()
     excluded_ids = {str(value) for value in (excluded_ids or [])}
@@ -426,7 +432,8 @@ def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed=""
             candidates.append((score, item, file_info))
     for _, item, file_info in sorted(candidates, key=lambda row: row[0], reverse=True):
         path = output_dir / f"pixabay_{index}.mp4"
-        if _download_file(file_info["url"], path, max_bytes=80 * 1024 * 1024):
+        max_bytes = (42 if require_supercar else 80) * 1024 * 1024
+        if _download_file(file_info["url"], path, max_bytes=max_bytes):
             return {
                 "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("pageURL", ""),
