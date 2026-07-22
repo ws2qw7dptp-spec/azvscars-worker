@@ -118,11 +118,16 @@ def build_quality_report(data, post_type, media_type, source_assets=None):
 
     market_issues, market_details = _market_checks(data.get("market_cars") or [])
     issues.extend(market_issues)
+    warnings = []
 
     rights_status = "original_or_licensed"
     if source_assets:
         if any((asset or {}).get("reused_fallback") for asset in source_assets if isinstance(asset, dict)):
-            issues.append("Fallback asset reuse baş verdi; insan yoxlaması tövsiyə olunur.")
+            message = "Fallback asset reuse baş verdi; insan yoxlaması tövsiyə olunur."
+            if post_type == "night_supercar":
+                warnings.append(message)
+            else:
+                issues.append(message)
         if any((asset or {}).get("source_url") or (asset or {}).get("url") for asset in source_assets if isinstance(asset, dict)):
             rights_status = "external_licensed_or_platform_source"
 
@@ -142,6 +147,7 @@ def build_quality_report(data, post_type, media_type, source_assets=None):
         "auto_publish_allowed": not issues,
         "confidence": confidence,
         "issues": issues,
+        "warnings": warnings,
         "recent_post_window": 20,
         "overused_models": overused_models,
         "market_source_checks": market_details,
@@ -150,4 +156,3 @@ def build_quality_report(data, post_type, media_type, source_assets=None):
         "media_type": media_type,
     }
     return report
-
