@@ -428,8 +428,15 @@ def action_night_supercar_generate(sid, mark_done=True):
             used_video_ids=_used_video_ids(),
             max_videos=3,
         )
-        if len(media["videos"]) != 3:
-            raise RuntimeError(f"Three fresh supercar clips were not found; publish cancelled. {media.get('errors')}")
+        video_fallback_note = ""
+        if not media["videos"]:
+            raise RuntimeError(f"No supercar clips were found; publish cancelled. {media.get('errors')}")
+        if len(media["videos"]) < 3:
+            video_fallback_note = (
+                f"Fresh supercar clip pool returned {len(media['videos'])}/3 clips; "
+                "renderer reused fresh clips inside this Reel to keep scheduled publishing alive."
+            )
+            print(f"[night_supercar] {video_fallback_note}")
 
         set_status(sid, "running", "🔊 Üç fərqli supercar səsi seçilir…")
         sound_profiles = [
@@ -478,6 +485,11 @@ def action_night_supercar_generate(sid, mark_done=True):
             "Dostuna göndər ki, ən yaxşı səsi o da seçsin.\n\n"
             "#azvscars #supercar #racing #carshow #baku #azerbaijan #cars"
         )
+        clip_description = (
+            "Three unique supercar, racing and exhibition clips with unique engine sounds."
+            if len(media["videos"]) >= 3
+            else "Supercar, racing and exhibition Reel using the available fresh licensed clips with same-run visual fallback."
+        )
         meta = {
             "sid": sid,
             "post_type": "night_supercar",
@@ -502,10 +514,12 @@ def action_night_supercar_generate(sid, mark_done=True):
             "car2_name": "Racing & Exhibition",
             "caption": caption,
             "alt_text": "Gecə supercar, yarış və avtomobil sərgisi kadrlarından hazırlanmış dinamik Reel.",
-            "image_description": "Three unique supercar, racing and exhibition clips with unique engine sounds.",
+            "image_description": clip_description,
             "data": {
                 "video_sources": video_sources,
                 "audio_sources": audio_sources,
+                "video_fallback_note": video_fallback_note,
+                "fresh_video_count": len(media["videos"]),
                 "has_time_overlay": False,
                 "end_card": "FOLLOW @azvscars",
             },

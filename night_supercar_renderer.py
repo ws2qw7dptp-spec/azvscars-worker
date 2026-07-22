@@ -152,11 +152,14 @@ def _mux_car_audio(video_path, audio_paths, output_path, clip_seconds, duration)
 
 
 def render_night_supercar_reel(video_paths, audio_paths, output_path, seed, clip_seconds=2.8):
-    if len(video_paths) < 3:
-        raise ValueError("Night supercar Reel requires three videos.")
+    if not video_paths:
+        raise ValueError("Night supercar Reel requires at least one video.")
+    render_paths = list(video_paths)
+    while len(render_paths) < 3:
+        render_paths.append(render_paths[len(render_paths) % len(video_paths)])
     segments = [
         _clip_frames(path, clip_seconds, f"{seed}:{index}")
-        for index, path in enumerate(video_paths[:3])
+        for index, path in enumerate(render_paths[:3])
     ]
     if any(not segment for segment in segments):
         raise RuntimeError("A supercar video could not be decoded.")
