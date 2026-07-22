@@ -804,8 +804,10 @@ def _video_has_human_content(path):
     try:
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
         sample_positions = [0.12, 0.24, 0.36, 0.48, 0.60, 0.72, 0.84]
-        hog = cv2.HOGDescriptor()
-        hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+        hog = None
+        if hasattr(cv2, "HOGDescriptor") and hasattr(cv2, "HOGDescriptor_getDefaultPeopleDetector"):
+            hog = cv2.HOGDescriptor()
+            hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
         face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
         upper_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_upperbody.xml")
         for ratio in sample_positions:
@@ -822,9 +824,10 @@ def _video_has_human_content(path):
             upper = upper_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=5, minSize=(48, 72))
             if len(upper):
                 return True
-            boxes, weights = hog.detectMultiScale(frame, winStride=(8, 8), padding=(8, 8), scale=1.05)
-            if any(float(weight) >= 0.55 for weight in weights):
-                return True
+            if hog is not None:
+                boxes, weights = hog.detectMultiScale(frame, winStride=(8, 8), padding=(8, 8), scale=1.05)
+                if any(float(weight) >= 0.55 for weight in weights):
+                    return True
     finally:
         cap.release()
     return False
