@@ -40,13 +40,13 @@ VIDEO_QUERIES = {
 
 NIGHT_SUPERCAR_QUERIES = [
     "Lamborghini exhaust close up car only",
-    "Ferrari wheel close up car only",
-    "McLaren supercar exterior detail car only",
+    "Ferrari supercar rolling shot car only",
+    "McLaren supercar exterior car only empty road",
     "Porsche GT3 headlight close up car only",
     "exotic supercar showroom empty car only",
     "supercar rolling shot car only",
-    "Bugatti hypercar detail car only",
-    "Pagani hypercar exterior detail car only",
+    "Bugatti hypercar exterior car only empty road",
+    "Pagani hypercar exterior car only empty road",
     "supercar tail light close up car only",
 ]
 
@@ -63,6 +63,9 @@ HUMAN_VIDEO_TERMS = (
     "wedding", "bride", "face", "body", "walk", "walking", "standing", "posing",
     "crowd", "spectator", "audience", "grandstand", "fans", "event",
     "pit-lane", "pitlane", "parade", "festival", "meetup",
+    "hand", "hands", "detailing", "detailer", "wash", "washing", "cleaning",
+    "polish", "polishing", "wrap", "wrapping", "tint", "mechanic", "repair",
+    "service", "garage work",
 )
 
 
