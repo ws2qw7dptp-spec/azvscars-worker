@@ -686,20 +686,27 @@ def _startup_queries(car_name, engine, profile=None):
 
 def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, query_rank=0):
     profile = profile or {}
-    res = requests.get(
-        "https://freesound.org/apiv2/search/",
-        params={
-            "query": query,
-            "filter": 'duration:[1.2 TO 10] license:"Creative Commons 0"',
-            "sort": "rating_desc",
-            "group_by_pack": "1",
-            "page_size": 12,
-            "fields": "id,name,previews,license,duration,username,url,tags,avg_rating,num_ratings",
-        },
-        headers={"Authorization": f"Token {token}"},
-        timeout=12,
-    )
-    res.raise_for_status()
+    try:
+        res = requests.get(
+            "https://freesound.org/apiv2/search/",
+            params={
+                "query": query,
+                "filter": 'duration:[1.2 TO 10] license:"Creative Commons 0"',
+                "sort": "rating_desc",
+                "group_by_pack": "1",
+                "page_size": 12,
+                "fields": "id,name,previews,license,duration,username,url,tags,avg_rating,num_ratings",
+            },
+            headers={"Authorization": f"Token {token}"},
+            timeout=12,
+        )
+        if res.status_code == 429:
+            print(f"[audio] Freesound rate limit hit for query={query}; using fallback if needed.")
+            return None
+        res.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[audio] Freesound search skipped for query={query}: {exc}")
+        return None
     candidates = []
     for item in res.json().get("results", []):
         provider_id = str(item.get("id") or "")
