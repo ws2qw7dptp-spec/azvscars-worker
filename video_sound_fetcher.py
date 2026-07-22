@@ -8,6 +8,11 @@ from urllib.parse import quote_plus
 
 import requests
 
+try:
+    import cv2
+except Exception:
+    cv2 = None
+
 
 VIDEO_QUERIES = {
     "sound_battle": ["car burnout night", "muscle car burnout", "car drifting smoke"],
@@ -432,6 +437,9 @@ def _download_pexels_video(query, output_dir, index, excluded_ids=None, seed="",
         max_bytes = (28 if require_supercar else 80) * 1024 * 1024
         max_seconds = 24 if require_supercar else 45
         if _download_file(file_info["link"], path, max_bytes=max_bytes, max_seconds=max_seconds):
+            if _video_has_human_content(path):
+                path.unlink(missing_ok=True)
+                continue
             return {
                 "path": str(path), "provider": "pexels", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("url", ""),
@@ -484,6 +492,9 @@ def _download_pixabay_video(query, output_dir, index, excluded_ids=None, seed=""
         max_bytes = (28 if require_supercar else 80) * 1024 * 1024
         max_seconds = 24 if require_supercar else 45
         if _download_file(file_info["url"], path, max_bytes=max_bytes, max_seconds=max_seconds):
+            if _video_has_human_content(path):
+                path.unlink(missing_ok=True)
+                continue
             return {
                 "path": str(path), "provider": "pixabay", "id": str(item.get("id")),
                 "query": query, "source_url": item.get("pageURL", ""),
@@ -782,6 +793,50 @@ def _reject_non_car_audio(name_and_tags):
         "man ", "woman ", "male ", "female ", "character", "game asset",
     )
     return any(term in name_and_tags for term in rejected_terms)
+
+
+def _video_has_human_content(path):
+    if cv2 is None:
+        return False
+    cap = cv2.VideoCapture(str(path))
+    if not cap.isOpened():
+        return False
+    try:
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        sample_positions = [0.12, 0.24, 0.36, 0.48, 0.60, 0.72, 0.84]
+        hog = cv2.HOGDescriptor()
+        hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+        face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        upper_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_upperbody.xml")
+        for ratio in sample_positions:
+            if frame_count > 0:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, min(frame_count - 1, int(frame_count * ratio))))
+            ok, frame = cap.read()
+            if not ok or frame is None:
+                continue
+            frame = _resize_for_detection(frame)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=4, minSize=(34, 34))
+            if len(faces):
+                return True
+            upper = upper_detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=5, minSize=(48, 72))
+            if len(upper):
+                return True
+            boxes, weights = hog.detectMultiScale(frame, winStride=(8, 8), padding=(8, 8), scale=1.05)
+            if any(float(weight) >= 0.55 for weight in weights):
+                return True
+    finally:
+        cap.release()
+    return False
+
+
+def _resize_for_detection(frame):
+    height, width = frame.shape[:2]
+    long_edge = max(height, width)
+    if long_edge <= 900:
+        return frame
+    scale = 900 / long_edge
+    return cv2.resize(frame, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
 
 
 def _local_sfx_files(limit):
