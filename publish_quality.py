@@ -6,14 +6,11 @@ from posting_plan import profile_for
 
 AZ_HASHTAGS = [
     "#azvscars",
-    "#azerbaycan",
-    "#baku",
-    "#avto",
-    "#masin",
-    "#avtomobil",
+    "#bakimasin",
     "#avtobazar",
-    "#bakucars",
-    "#azerbaijancars",
+    "#masinqiymeti",
+    "#azerbaycan",
+    "#avtomobil",
 ]
 
 AZN_PER_USD = 1.7
@@ -165,11 +162,31 @@ def build_caption(data, post_type="main", media_type="carousel"):
     speed = f"0-100: {_clean(data.get('slide3_car1_stat'))} vs {_clean(data.get('slide3_car2_stat'))}"
     price = f"Təxmini qiymət müqayisəsi: {normalize_price_label(data.get('slide4_car1_stat'))} vs {normalize_price_label(data.get('slide4_car2_stat'))}"
     if post_type == "quick":
-        searchable = f"{car1} vs {car2}."
+        searchable = f"Öz pulunla seçim: {car1} yoxsa {car2}?"
     elif post_type == "war":
-        searchable = f"{car1} yoxsa {car2}?"
+        searchable = f"Bakı sürücüləri üçün dava sualı: {car1} yoxsa {car2}?"
     else:
-        searchable = f"{car1} və {car2} müqayisəsi."
+        searchable = f"{car1} və {car2}: Bakı reallığında hansı daha ağıllıdır?"
+
+    if media_type == "reel":
+        follow_reason = "Hər həftə real qiymət, servis və sürücü seçimi üçün @azvscars-ı izlə."
+        if post_type == "war":
+            follow_reason = "Ən sərt Bakı avto debatları üçün @azvscars-ı izlə."
+        elif post_type == "quick":
+            follow_reason = "Hər gün qısa alıcı seçimi üçün @azvscars-ı izlə."
+        lines = [
+            searchable,
+            "",
+            base,
+            price,
+            buyer,
+            question,
+            "Ən yaxşı səbəbi növbəti postda istifadə edə bilərik.",
+            follow_reason,
+            "",
+            " ".join((profile.get("hashtags") or AZ_HASHTAGS)[:6]),
+        ]
+        return "\n".join(line for line in lines if line is not None).strip()[:2150]
 
     lines = [
         searchable,

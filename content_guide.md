@@ -71,10 +71,10 @@ Every generated post should map to one of these themes through `theme_type`.
 
 | Baku time | Format | Goal |
 |---|---|---|
-| 09:00 | Surucu secimi | quick comments |
-| 13:00 | Real avto doyus | saveable comparison |
-| 19:30 | Serh savasi | controversial debate |
-| 22:45 | Cinematic Reel | video motion, real sound, watch time |
+| 12:20-13:30 | Real bazar / qiymət | saves + shares |
+| 15:10 | Surucu secimi | quick comments |
+| 19:10-20:30 | Serh savasi / supercar | comments + shares |
+| 22:30-23:00 | Car-only supercar | follows + watch time |
 
 Stories:
 - 08:45: daily schedule and brand reminder
@@ -125,6 +125,7 @@ Requirements:
 - Music from the local soundtrack rotation.
 - Engine/rev/acceleration SFX should be added when available.
 - If cinematic media cannot be fetched, the system must fall back to the normal branded VS reel.
+- Every Reel caption must answer: why should a non-follower follow this page now?
 
 Content mix:
 - 70% classic VS formats.
@@ -169,9 +170,9 @@ Baki-da gundelik surus ucun biri daha mentiqli gorune biler, amma urek basqa sey
 Sen hansini secersen: sol yoxsa sag?
 ```
 
-Hashtags: 5-8 only. Mix local and broad:
+Hashtags: 5-6 only. Use local/niche tags first:
 
-`#azvscars #azerbaijan #baku #avto #masin #avtomobil #avtobazar`
+`#azvscars #bakimasin #avtobazar #masinqiymeti #azerbaycan #avtomobil`
 
 ---
 

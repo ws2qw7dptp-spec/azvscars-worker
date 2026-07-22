@@ -2,17 +2,19 @@
 
 ## Weekly Schedule
 
-All feed posts are Reels. Times are Asia/Baku. The system now favors 5-7 higher-quality feed publications per week instead of repetitive daily spam.
+All feed posts are Reels. Times are Asia/Baku. The system now favors 9 testable feed publications per week, capped at 2 feed posts per day, mostly in Monday-Friday high-probability Instagram windows.
 
 | Slot | Time | Type | Format | Goal |
 | --- | --- | --- | --- | --- |
-| `mon_0900_buying` | Monday 09:00 | `quick` | Clean buyer-decision Reel | shares + comments |
-| `tue_1300_market` | Tuesday 13:00 | `market` | One-car market Reel | saves + shares |
-| `wed_1930_main` | Wednesday 19:30 | `main` | Clean buyer-comparison Reel | saves + shares |
-| `fri_1930_war` | Friday 19:30 | `war` | Meaningful debate Reel | comments + shares |
-| `sat_2030_supercar` | Saturday 20:30 | `night_supercar` | Supercar special Reel | follows + shares |
-| `sat_2230_supercar` | Saturday 22:30 | `night_supercar` | Supercar special Reel | follows + shares |
-| `sun_0030_supercar` | Sunday 00:30 | `night_supercar` | Supercar special Reel | follows + shares |
+| `mon_1510_buying` | Monday 15:10 | `quick` | Clean buyer-decision Reel | shares + comments |
+| `tue_1320_market` | Tuesday 13:20 | `market` | One-car market Reel | saves + shares |
+| `tue_1910_debate` | Tuesday 19:10 | `war` | Meaningful debate Reel | comments + shares |
+| `wed_1240_main` | Wednesday 12:40 | `main` | Clean buyer-comparison Reel | saves + shares |
+| `wed_2300_supercar` | Wednesday 23:00 | `night_supercar` | Car-only supercar Reel | follows + shares |
+| `thu_1220_market` | Thursday 12:20 | `market` | One-car market Reel | saves + shares |
+| `thu_2030_supercar` | Thursday 20:30 | `night_supercar` | Car-only supercar Reel | follows + shares |
+| `fri_1330_war` | Friday 13:30 | `war` | Meaningful debate Reel | comments + shares |
+| `fri_2230_supercar` | Friday 22:30 | `night_supercar` | Car-only supercar Reel | follows + shares |
 
 Manual-only type:
 
@@ -26,11 +28,13 @@ Manual-only type:
 - Every Reel uses the clean AZVSCARS visual system: top-left logo, simple detail panel, final VS logo + `FOLLOW @azvscars`.
 - No old bottom-card, carousel, Canva-style, or fake time overlays in Reels.
 - One car per Reel unless the type is a comparison type: `quick`, `main`, `war`, or `night`.
-- `night_supercar` uses real supercar/racing/exhibition clips and fresh car sounds.
+- `night_supercar` uses car-only licensed clips. No people, women, hands, crowds, detailing, or event/spectator footage.
 - Market posts show AZN prices, source labeling, and check dates.
 - Captions use one primary CTA only.
+- Captions must include one clear reason to follow, not just a voting question.
 - The worker checks the last 20 posts for model overuse and visual family repetition.
 - Low-confidence market or rights cases must fail before auto-publish.
+- Track growth using `profile_visits / reach`, `follows / profile_visits`, `sends`, `saves`, and 3-second retention. Likes alone are not a success metric.
 
 ## Metadata Contract
 

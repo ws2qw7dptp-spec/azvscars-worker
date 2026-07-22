@@ -104,8 +104,8 @@ def pick_market_batch(seed, count=3):
 
 def build_market_caption(cars):
     single = len(cars) == 1
-    opener = "Bu pula dəyər?" if single else "Bakıda bu qiymətlər normaldır?"
-    utility = "Maşın baxırsansa bunu yadda saxla." if single else "Bu müqayisəni yadda saxla."
+    opener = "Bakı bazarında bu pula dəyər?" if single else "Bakıda bu qiymətlər normaldır?"
+    utility = "Maşın axtaran dosta göndər; qiyməti sonra müqayisə etmək üçün yadda saxla." if single else "Bu müqayisəni maşın axtaran dosta göndər."
     lines = [opener, ""]
     for car in cars:
         meta_bits = [str(car["year"]) if car.get("year") else "", car.get("engine", ""), car.get("mileage", "")]
@@ -122,8 +122,9 @@ def build_market_caption(cars):
         "",
         utility,
         "Bu qiymətə alardın, yoxsa keçərdin? Səbəbini yaz." if single else "Sən hansını seçərdin və niyə?",
+        "Hər həftə real AZN qiymətləri üçün @azvscars-ı izlə.",
         "",
-        " ".join(AZ_HASHTAGS + ["#masinqiymeti", "#turboaz", "#bakimasinbazari"]),
+        " ".join((AZ_HASHTAGS + ["#bakimasinbazari"])[:6]),
     ])
     return "\n".join(lines).strip()[:2150]
 

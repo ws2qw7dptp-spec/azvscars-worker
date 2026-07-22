@@ -6,20 +6,24 @@ concurrency:
 
 on:
   schedule:
-    # Monday 09:00 AZT -> 05:00 UTC
-    - cron: "0 5 * * 1"
-    # Tuesday 13:00 AZT -> 09:00 UTC
-    - cron: "0 9 * * 2"
-    # Wednesday 19:30 AZT -> 15:30 UTC
-    - cron: "30 15 * * 3"
-    # Friday 19:30 AZT -> 15:30 UTC
-    - cron: "30 15 * * 5"
-    # Saturday 20:30 AZT -> 16:30 UTC
-    - cron: "30 16 * * 6"
-    # Saturday 22:30 AZT -> 18:30 UTC
-    - cron: "30 18 * * 6"
-    # Sunday 00:30 AZT == Saturday 20:30 UTC
-    - cron: "30 20 * * 6"
+    # Monday 15:10 AZT -> 11:10 UTC
+    - cron: "10 11 * * 1"
+    # Tuesday 13:20 AZT -> 09:20 UTC
+    - cron: "20 9 * * 2"
+    # Tuesday 19:10 AZT -> 15:10 UTC
+    - cron: "10 15 * * 2"
+    # Wednesday 12:40 AZT -> 08:40 UTC
+    - cron: "40 8 * * 3"
+    # Wednesday 23:00 AZT -> 19:00 UTC
+    - cron: "0 19 * * 3"
+    # Thursday 12:20 AZT -> 08:20 UTC
+    - cron: "20 8 * * 4"
+    # Thursday 20:30 AZT -> 16:30 UTC
+    - cron: "30 16 * * 4"
+    # Friday 13:30 AZT -> 09:30 UTC
+    - cron: "30 9 * * 5"
+    # Friday 22:30 AZT -> 18:30 UTC
+    - cron: "30 18 * * 5"
 
   workflow_dispatch:
     inputs:
@@ -66,27 +70,33 @@ jobs:
             echo "POST_TYPE=${{ github.event.inputs.type }}" >> "$GITHUB_ENV"
             echo "POSTING_SLOT=manual" >> "$GITHUB_ENV"
           else
-            if [[ "${{ github.event.schedule }}" == "0 5 * * 1" ]]; then
+            if [[ "${{ github.event.schedule }}" == "10 11 * * 1" ]]; then
               echo "POST_TYPE=quick" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=mon_0900_buying" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "0 9 * * 2" ]]; then
+              echo "POSTING_SLOT=mon_1510_buying" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "20 9 * * 2" ]]; then
               echo "POST_TYPE=market" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=tue_1300_market" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 15 * * 3" ]]; then
-              echo "POST_TYPE=main" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=wed_1930_main" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 15 * * 5" ]]; then
+              echo "POSTING_SLOT=tue_1320_market" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "10 15 * * 2" ]]; then
               echo "POST_TYPE=war" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=fri_1930_war" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 16 * * 6" ]]; then
+              echo "POSTING_SLOT=tue_1910_debate" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "40 8 * * 3" ]]; then
+              echo "POST_TYPE=main" >> "$GITHUB_ENV"
+              echo "POSTING_SLOT=wed_1240_main" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "0 19 * * 3" ]]; then
               echo "POST_TYPE=night_supercar" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=sat_2030_supercar" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 18 * * 6" ]]; then
+              echo "POSTING_SLOT=wed_2300_supercar" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "20 8 * * 4" ]]; then
+              echo "POST_TYPE=market" >> "$GITHUB_ENV"
+              echo "POSTING_SLOT=thu_1220_market" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "30 16 * * 4" ]]; then
               echo "POST_TYPE=night_supercar" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=sat_2230_supercar" >> "$GITHUB_ENV"
-            elif [[ "${{ github.event.schedule }}" == "30 20 * * 6" ]]; then
+              echo "POSTING_SLOT=thu_2030_supercar" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "30 9 * * 5" ]]; then
+              echo "POST_TYPE=war" >> "$GITHUB_ENV"
+              echo "POSTING_SLOT=fri_1330_war" >> "$GITHUB_ENV"
+            elif [[ "${{ github.event.schedule }}" == "30 18 * * 5" ]]; then
               echo "POST_TYPE=night_supercar" >> "$GITHUB_ENV"
-              echo "POSTING_SLOT=sun_0030_supercar" >> "$GITHUB_ENV"
+              echo "POSTING_SLOT=fri_2230_supercar" >> "$GITHUB_ENV"
             else
               echo "POST_TYPE=main" >> "$GITHUB_ENV"
               echo "POSTING_SLOT=manual" >> "$GITHUB_ENV"

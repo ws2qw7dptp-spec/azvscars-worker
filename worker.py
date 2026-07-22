@@ -480,11 +480,11 @@ def action_night_supercar_generate(sid, mark_done=True):
 
         meta_fields = _metadata("night_supercar", "reel")
         caption = (
-            "Gecə supercar seçimi.\n\n"
-            "Bu dəfə yarış, sərgi və supercar kadrlarından ən güclü anları topladıq. "
-            "Səsi aç və hansı səhnənin daha çox saxladığını yaz.\n\n"
-            "Dostuna göndər ki, ən yaxşı səsi o da seçsin.\n\n"
-            "#azvscars #supercar #racing #carshow #baku #azerbaijan #cars"
+            "Car-only supercar gecəsi.\n\n"
+            "İnsan yox, sadəcə maşın, hərəkət və səs. "
+            "Ən çox saxladığın səhnəni şərhə yaz.\n\n"
+            "Belə təmiz supercar seriyası üçün @azvscars-ı izlə.\n\n"
+            "#azvscars #supercar #bakucars #avtomobil #azerbaycan"
         )
         clip_description = (
             "Three unique supercar, racing and exhibition clips with unique engine sounds."
