@@ -17,7 +17,7 @@ def main():
     res = requests.post(
         f"{base_url}/api/delete-instagram-post",
         json={"post_id": args.post_id},
-        headers={"x-admin-pass": admin_pass},
+        headers={"X-Admin-Password": admin_pass},
         timeout=60,
     )
     print(f"[delete] response: {res.status_code} {res.text}")

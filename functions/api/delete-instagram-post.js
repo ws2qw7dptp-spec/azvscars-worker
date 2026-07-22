@@ -9,7 +9,7 @@ function json(data, status = 200) {
 
 export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => ({}));
-  const admin = request.headers.get("x-admin-pass") || body.admin_pass || "";
+  const admin = request.headers.get("X-Admin-Password") || request.headers.get("x-admin-pass") || body.admin_pass || "";
   if (!env.ADMIN_PASS || admin !== env.ADMIN_PASS) {
     return json({ ok: false, error: "Unauthorized" }, 401);
   }
