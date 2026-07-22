@@ -275,7 +275,7 @@ def build_stat_slide(base: Image.Image, title: str,
 
 
 def build_outro_slide(base: Image.Image, out: str, data: dict | None = None):
-    """Slide 5 – reveal + CTA with the current four-post daily schedule."""
+    """Slide 5 – reveal + CTA with the current weekly reel schedule."""
     img = base.copy()
     img.alpha_composite(Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 215)))
     draw = ImageDraw.Draw(img)
@@ -299,14 +299,14 @@ def build_outro_slide(base: Image.Image, out: str, data: dict | None = None):
 
     # Schedule
     f_label = get_font(58)
-    draw_centered(draw, "HƏR GÜN 4 AVTO DÖYÜŞ", f_label, 625, (210, 210, 210))
+    draw_centered(draw, "REAL HƏFTƏLİK REEL PLANI", f_label, 625, (210, 210, 210))
 
     f_time = get_font(72)
-    draw_centered(draw, "09:00-09:25  /  13:00-13:25", f_time, 720, COLOR_RED)
-    draw_centered(draw, "19:30-19:55  /  22:45-23:10", f_time, 810, COLOR_RED)
+    draw_centered(draw, "ALICI • MARKET • DEBAT", f_time, 720, COLOR_RED)
+    draw_centered(draw, "GECƏ: CAR-ONLY SUPERCAR", f_time, 810, COLOR_RED)
 
     f_zone = get_font(44)
-    draw_centered(draw, "BAKI VAXTI İLƏ", f_zone, 910, (160, 160, 160))
+    draw_centered(draw, "GÜNDƏ MAX 2 FEED POST • BAKI VAXTI", f_zone, 910, (160, 160, 160))
 
     img.convert("RGB").save(out)
 

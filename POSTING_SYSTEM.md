@@ -22,6 +22,22 @@ Manual-only type:
 | --- | --- | --- |
 | `market` | One-car price Reel | Show one car, AZN price, source, check date, and price type |
 
+## Story Schedule
+
+Stories are support content, not repeated filler. The generator renders 10 rotating cards every run and scheduled workflows publish only the useful subset for that time of day.
+
+| Time | Files | Goal |
+| --- | --- | --- |
+| 08:45 | `story1_brand`, `story9_daily_duel`, `story2_schedule` | daily hook, poll-style choice, accurate plan |
+| 14:30 | `story10_daily_question`, `story3_topics`, `story6_china_germany` | buyer question, topic seed, debate prompt |
+| 20:45 | `story5_comment`, `story8_suv_war`, `story4_contact` | serious comments, share prompt, collaboration/DM |
+
+Story rules:
+
+- No repeated "generic reminder" cards without a question, poll, topic, or collaboration purpose.
+- Collaboration story must ask for full-car media, model/year/engine/mileage, AZN price, city, and no people in frame.
+- Story text should point viewers back to the next Reel or invite them to send a car/topic.
+
 ## Creative Rules
 
 - Every feed post is 1080x1920, 9:16, 30fps.

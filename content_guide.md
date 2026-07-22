@@ -77,10 +77,14 @@ Every generated post should map to one of these themes through `theme_type`.
 | 22:30-23:00 | Car-only supercar | follows + watch time |
 
 Stories:
-- 08:45: daily schedule and brand reminder
-- 14:30: controversy teaser
-- 20:45: comment CTA
-- Monday, Wednesday, Friday: contact/sponsor story
+- 08:45: attention hook, daily duel poll, accurate weekly schedule
+- 14:30: buyer question, rotating topic, debate teaser
+- 20:45: comment rule, evening debate/share prompt, collaboration/DM card
+
+Story rules:
+- Every story card needs a job: make people vote, answer, send to a friend, or submit a car/topic.
+- Collaboration stories ask for model, year, motor, mileage, real AZN price, city, and full-car media with no people in frame.
+- Do not publish generic repeated reminders that do not connect to the next reel.
 
 ---
 
