@@ -586,7 +586,7 @@ def download_market_startup_sounds(cars, output_dir, seed, asset_history=None, m
                     query,
                     token,
                     f"{seed}:reused:{index}:{query}",
-                    set(),
+                    excluded_ids,
                     profile=profile,
                     query_rank=query_index,
                 )
