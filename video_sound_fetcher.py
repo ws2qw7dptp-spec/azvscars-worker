@@ -680,18 +680,11 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
         if not provider_id or provider_id in excluded_ids or not preview:
             continue
         name_and_tags = f"{item.get('name', '')} {' '.join(item.get('tags') or [])}".lower()
+        if _reject_non_car_audio(name_and_tags):
+            continue
         if not any(term in name_and_tags for term in (
             "car", "automobile", "vehicle", "exhaust", "rev", "v8", "v10", "v12", "supercar",
             "engine", "motor", "electric",
-        )):
-            continue
-        if any(term in name_and_tags for term in (
-            "sci-fi", "scifi", "spaceship", "space ship", "video game", "synthesized", "computer", "boot",
-            "laugh", "voice", "talk", "speech", "crash", "alarm", "horn", "siren", "screech",
-            "tire", "tyre", "skid", "traffic", "rain", "wind", "door", "beep", "fan", "loop",
-            "wheel", "gravel", "burnout", "drift", "sliding", "spin", "spinning", "dirt",
-            "hammer", "hit", "impact", "metal", "vent", "air vent", "factory", "machine", "industrial",
-            "pipe", "clang", "bang", "thud", "knock", "tool", "workshop",
         )):
             continue
         jitter = int(hashlib.sha256(f"{seed}:{provider_id}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
@@ -739,8 +732,6 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
             score += 24
         if any(term in name_and_tags for term in ("idle", "stationary", "stationair", "inside car", "interior")):
             score -= 85
-        if any(term in name_and_tags for term in ("bus", "truck", "motorcycle", "motorbike", "tractor", "diesel", "lawn")):
-            score -= 110
         if score < 60:
             continue
         item["audio_match"] = {
@@ -759,6 +750,20 @@ def _search_fresh_freesound(query, token, seed, excluded_ids, profile=None, quer
     selected["selected_query"] = query
     selected["selection_score"] = candidates[0][0]
     return selected
+
+
+def _reject_non_car_audio(name_and_tags):
+    rejected_terms = (
+        "sci-fi", "scifi", "spaceship", "space ship", "video game", "synthesized", "computer", "boot",
+        "laugh", "voice", "talk", "speech", "crash", "alarm", "horn", "siren", "screech",
+        "tire", "tyre", "skid", "traffic", "rain", "wind", "door", "beep", "fan", "loop",
+        "wheel", "gravel", "burnout", "drift", "sliding", "spin", "spinning", "dirt",
+        "hammer", "hit", "impact", "metal", "vent", "air vent", "factory", "machine", "industrial",
+        "pipe", "clang", "bang", "thud", "knock", "tool", "workshop", "bus", "truck", "lorry",
+        "motorcycle", "motorbike", "bike", "scooter", "tractor", "lawn", "mower", "chainsaw",
+        "generator", "diesel", "train", "boat", "plane", "airplane", "helicopter",
+    )
+    return any(term in name_and_tags for term in rejected_terms)
 
 
 def _local_sfx_files(limit):
